@@ -1,0 +1,134 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.2"
+    defaultConfig {
+        applicationId "com.example.weaverx"
+        minSdkVersion 16
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+        multiDexEnabled true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86', 'x86_64', 'arm64-v8a', 'armeabi-v7a', 'armeabi'
+            universalApk false
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+
+ext{
+    lifecycle_version = '2.2.0-rc03'
+    room_version = '2.2.3'
+    preference_version = '1.1.0'
+    coroutine_version = '1.3.2'
+    event_bus_version = '3.1.1'
+    multidex_version = '2.0.1'
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.core:core-ktx:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.google.android.material:material:1.2.0-alpha03'
+
+
+    //room
+    implementation "androidx.room:room-runtime:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+
+    //preference
+    implementation "androidx.preference:preference-ktx:$preference_version"
+
+
+    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+
+
+    //coroutine
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutine_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutine_version"
+
+
+    //eventbus
+    implementation "org.greenrobot:eventbus:$event_bus_version"
+
+    //multidex
+    implementation "androidx.multidex:multidex:$multidex_version"
+
+    //floating action button
+    implementation "com.leinardi.android:speed-dial:3.1.1"
+
+    //progressview
+    implementation "com.github.skydoves:progressview:1.0.1"
+
+    //logger timber
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+
+    //koin
+    implementation "org.koin:koin-android:2.0.1"
+    implementation "org.koin:koin-androidx-viewmodel:2.0.1"
+
+    //material dialogs
+    implementation 'com.afollestad.material-dialogs:core:3.1.1'
+    implementation 'com.afollestad.material-dialogs:input:3.1.1'
+    implementation 'com.afollestad.material-dialogs:files:3.1.1'
+    implementation 'com.afollestad.material-dialogs:bottomsheets:3.1.1'
+
+    //apache common validator
+    implementation 'commons-validator:commons-validator:1.6'
+
+    //axet libraries
+    implementation 'com.github.axet:libtorrent:0.13.38'
+    implementation('com.github.axet:wget:1.7.0') {
+        exclude group: 'org.json', module: 'json'
+    }
+    implementation 'com.github.axet:android-library:1.32.3'
+
+    //aria
+    implementation 'com.arialyy.aria:core:3.8.3'
+    kapt 'com.arialyy.aria:compiler:3.8.3'
+
+    //permission
+    implementation 'com.karumi:dexter:5.0.0'
+
+    //expandable layout
+    implementation "com.github.skydoves:expandablelayout:1.0.3"
+
+    //progressbutton
+    implementation 'com.github.razir.progressbutton:progressbutton:1.0.3'
+
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}

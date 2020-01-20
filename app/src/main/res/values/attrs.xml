@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="weaverStyle">
+        <attr name="iconColor" format="reference" />
+        <attr name="iconColorInverse" format="reference" />
+        <attr name="iconRippleColor" format="reference" />
+        <attr name="selectedBackground" format="reference" />
+        <attr name="circleBackgroundDrawable" format="reference" />
+        <attr name="progressBarForeground" format="reference"/>
+        <attr name="progressBarBackground" format="reference"/>
+    </declare-styleable>
+
+
+    <item name="customTextViewTitleId" type="id"/>
+    <item name="customTextViewDescriptionId" type="id"/>
+    <item name="fileId" type="id"/>
+    <item name="magnetId" type="id"/>
+    <item name="linkId" type="id"/>
+
+</resources>

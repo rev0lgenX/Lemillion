@@ -1,0 +1,96 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="BaseTheme" />
+
+    <style name="BaseTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <item name="android:textColorPrimary">@color/textColorPrimary</item>
+        <item name="android:textColorSecondary">@color/textColorPrimary</item>
+        <item name="android:textColorPrimaryInverse">@color/textColorPrimaryInverse</item>
+        <item name="android:textColorSecondaryInverse">@color/textColorSecondaryInverse</item>
+
+        <item name="android:actionModeBackground">@color/colorPrimary</item>
+        <item name="actionModeBackground">@color/colorPrimary</item>
+        <item name="windowActionModeOverlay">true</item>
+
+
+        <!--background-->
+        <item name="selectedBackground">@drawable/background_selector</item>
+
+
+        <!--dialog md-->
+        <item name="md_color_button_text">@color/materialButtonColor</item>
+        <item name="md_color_content">@color/textColorPrimary</item>
+
+
+        <!--icon-->
+        <item name="iconColor">@color/colorPrimaryInverseDark</item>
+        <item name="iconColorInverse">@color/colorPrimary</item>
+        <item name="iconRippleColor">@color/colorPrimary</item>
+
+        <!--pause play circle background drawable-->
+        <item name="circleBackgroundDrawable">@drawable/circle_background</item>
+
+        <!--progress-->
+        <item name="progressBarBackground">@color/progressBarBackgroundColor</item>
+        <item name="progressBarForeground">@color/progressBarColor</item>
+
+    </style>
+
+    <style name="BaseTheme.Dark" parent="BaseTheme">
+        <item name="colorPrimary">@color/colorPrimaryInverse</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryInverseDark</item>
+        <item name="android:windowBackground">@color/backgroundDark</item>
+        <item name="android:textColorPrimary">@color/textColorPrimaryInverse</item>
+        <item name="android:textColorSecondary">@color/textColorPrimaryInverse</item>
+
+
+        <item name="android:actionModeBackground">@color/colorPrimaryInverse</item>
+        <item name="actionModeBackground">@color/colorPrimaryInverse</item>
+
+        <!--background-->
+        <item name="selectedBackground">@drawable/background_selector_dark</item>
+
+        <!--dialog md-->
+        <item name="md_color_button_text">@color/materialButtonColorInverse</item>
+        <item name="md_background_color">?android:attr/windowBackground</item>
+        <item name="md_font_title">@font/open_sans_regular</item>
+        <item name="md_color_content">@color/textColorPrimaryInverse</item>
+
+
+        <!--icon-->
+        <item name="iconColor">@color/white</item>
+        <item name="iconColorInverse">@color/colorPrimaryInverseDark</item>
+        <item name="iconRippleColor">@color/colorPrimaryDark</item>
+
+        <!-- pause play drawable background-->
+        <item name="circleBackgroundDrawable">@drawable/circle_background_dark</item>
+
+
+        <!--progress-->
+        <item name="progressBarBackground">@color/progressBarBackgroundColorInverse</item>
+        <item name="progressBarForeground">@color/progressBarColorInverse</item>
+
+
+    </style>
+
+
+    <style name="CustomTabTextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="android:fontFamily">@font/open_sans_semi_bold</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="CustomToolbarTextAppearance" parent="Widget.AppCompat.Toolbar">
+        <item name="android:fontFamily">@font/open_sans_semi_bold</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
+        <item name="android:textSize">20sp</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+</resources>
