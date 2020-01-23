@@ -12,16 +12,23 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import androidx.fragment.app.FragmentStatePagerAdapter
+import com.afollestad.materialdialogs.LayoutMode
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.files.fileChooser
 import com.google.android.material.snackbar.Snackbar
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.listener.multi.SnackbarOnAnyDeniedMultiplePermissionsListener
 import com.leinardi.android.speeddial.SpeedDialActionItem
 import com.revolgenx.weaverx.R
-import com.revolgenx.weaverx.dialog.openFileChooser
-import com.revolgenx.weaverx.dialog.openMagnetDialog
+import com.revolgenx.weaverx.core.preference.storagePath
+import com.revolgenx.weaverx.core.util.makeToast
+import com.revolgenx.weaverx.dialog.*
 import com.revolgenx.weaverx.fragment.book.BookFragment
 import com.revolgenx.weaverx.fragment.torrent.TorrentFragment
 import kotlinx.android.synthetic.main.activity_main.*
+import libtorrent.Libtorrent
+import org.apache.commons.io.FileUtils
 import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
@@ -105,7 +112,8 @@ class MainActivity : AppCompatActivity() {
                     R.id.fileId -> {
                         close()
                         if (checkPermission()) {
-                            openFileChooser()
+//                            openFileChooser()
+                            openFileChooserForLib()
                         }
                         true
                     }
@@ -113,7 +121,7 @@ class MainActivity : AppCompatActivity() {
                     R.id.magnetId -> {
                         close()
                         if (checkPermission()) {
-                            openMagnetDialog()
+                            openLibtorrentMagnetDialog()
                         }
                         true
                     }
@@ -136,6 +144,58 @@ class MainActivity : AppCompatActivity() {
                         false
                     }
                 }
+            }
+        }
+    }
+
+
+    private fun openLibtorrentMagnetDialog() {
+        MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
+            title(R.string.magnet_link)
+            inputDialog(this@MainActivity) { _, text ->
+                val t = Libtorrent.addMagnet(storagePath(context), text.toString())
+                if (t == -1L) {
+                    showErrorDialog(Libtorrent.error())
+                } else {
+                    //open dialog
+                    AddTorrentBottomSheetDialog.newInstance(t)
+                        .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
+                    dismiss()
+                }
+            }
+
+            noAutoDismiss()
+            positiveButton(R.string.ok)
+            negativeButton(R.string.cancel) {
+                dismiss()
+            }
+        }
+    }
+
+    private fun openFileChooserForLib() {
+        MaterialDialog(this).show {
+            fileChooser { dialog, file ->
+                if (file.extension != "torrent") {
+                    makeToast(resId = R.string.not_torrent_file_extension)
+                }
+
+                val buf = FileUtils.readFileToByteArray(file)
+                val t = Libtorrent.addTorrentFromBytes(storagePath(context), buf)
+
+                if (t == -1L) {
+                    showErrorDialog(Libtorrent.error())
+                } else {
+                    //open dialog
+                    AddTorrentBottomSheetDialog.newInstance(t)
+                        .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
+                    dismiss()
+                }
+            }
+
+            noAutoDismiss()
+
+            negativeButton {
+                dismiss()
             }
         }
     }

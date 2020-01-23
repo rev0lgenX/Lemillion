@@ -1,12 +1,8 @@
 package com.revolgenx.weaverx.core.torrent
 
 import com.revolgenx.weaverx.core.util.postEvent
-import com.revolgenx.weaverx.core.torrent.common.MagnetParser
-import com.revolgenx.weaverx.core.torrent.common.TorrentMetadata
 import com.revolgenx.weaverx.event.TorrentEngineEvent
 import com.revolgenx.weaverx.event.TorrentEngineEventTypes
-import com.revolgenx.weaverx.event.TorrentAddedEvent
-import com.revolgenx.weaverx.event.TorrentAddedEventTypes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,6 +40,8 @@ class TorrentEngine {
                 }
 
                 Libtorrent.setSocketsPerTorrent(sock.toLong())
+//                Libtorrent.setDownloadRate(-1)
+//                Libtorrent.setUploadRate(-1)
                 Libtorrent.setBindAddr(":0")
 
                 postEvent(
@@ -55,8 +53,7 @@ class TorrentEngine {
                     Timber.d("engine started")
                     isEngineRunning.set(true)
 //                    updateFromPreference()
-                    Libtorrent.setDownloadRate(5 * 1024)
-                    Libtorrent.setUploadRate(5 * 1024)
+
                     postEvent(
                         TorrentEngineEvent(
                             TorrentEngineEventTypes.ENGINE_STARTED
@@ -104,60 +101,6 @@ class TorrentEngine {
 //    }
 
     fun isEngineRunning() = isEngineRunning.get()
-
-    fun addMagnet(magnet: MagnetParser) {
-        if (isEngineRunning.get()) {
-            val t = Libtorrent.addMagnet(magnet.path, magnet.write())
-            if (t == -1L) {
-                Timber.e(Libtorrent.error())
-                postEvent(
-                    TorrentAddedEvent(
-                        t,
-                        magnet.infoHash!!,
-                        magnet.path!!,
-                        TorrentAddedEventTypes.MAGNET_ADD_ERROR
-                    )
-                )
-            } else {
-                postEvent(
-                    TorrentAddedEvent(
-                        t,
-                        magnet.infoHash!!,
-                        magnet.path!!,
-                        TorrentAddedEventTypes.MAGNET_ADDED
-                    )
-                )
-            }
-        }
-    }
-
-
-    fun addTorrent(meta: TorrentMetadata) {
-        if (isEngineRunning.get()) {
-            val t = Libtorrent.addTorrentFromBytes(meta.path(), meta.blobs)
-
-            if (t == -1L) {
-                postEvent(
-                    TorrentAddedEvent(
-                        t,
-                        meta.infoHash.toString(),
-                        meta.path(),
-                        TorrentAddedEventTypes.TORRENT_ADD_ERROR
-                    )
-                )
-                return
-            }
-            postEvent(
-                TorrentAddedEvent(
-                    t,
-                    meta.infoHash.toString(),
-                    meta.path(),
-                    TorrentAddedEventTypes.TORRENT_ADDED
-                )
-            )
-        }
-        return
-    }
 
 
 }

@@ -27,4 +27,26 @@
     <string name="unable_to_add_magnet">Unable to add magnet</string>
     <string name="unable_to_add_torrent_file">Unable to add torrent file.</string>
     <string name="_unable_to_parse_file">Unable to parse file.</string>
+    <string name="error">Error</string>
+    <string name="name">Name</string>
+    <string name="hash">hash</string>
+    <string name="path">Path</string>
+    <string name="not_torrent_file_extension">Not a torrent file.</string>
+    <string name="done">Done</string>
+    <string name="select_none">Select none</string>
+    <string name="files">Files</string>
+    <string name="empty">Empty</string>
+    <string name="no_meta_data">Metadata not found.</string>
+    <string name="download_metadata">Download meta</string>
+    <string name="downloading">Downloading</string>
+    <string name="info">Info</string>
+    <string name="pieces">Pieces</string>
+    <string name="size">Size</string>
+    <string name="canceled">Canceled</string>
+    <string name="completed">Completed</string>
+    <string name="failed">Failed</string>
+    <string name="unknown">Unknown</string>
+    <string name="paused">Paused</string>
+    <string name="connecting">Connecting</string>
+    <string name="waiting">Waiting</string>
 </resources>

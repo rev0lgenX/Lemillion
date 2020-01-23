@@ -11,8 +11,6 @@ import com.revolgenx.weaverx.core.service.ServiceConnector
 import com.revolgenx.weaverx.core.service.isServiceRunning
 import com.revolgenx.weaverx.core.torrent.Torrent
 import com.revolgenx.weaverx.core.torrent.TorrentEngine
-import com.revolgenx.weaverx.core.torrent.common.MagnetParser
-import com.revolgenx.weaverx.core.torrent.common.TorrentMetadata
 import com.revolgenx.weaverx.core.util.*
 import com.revolgenx.weaverx.event.*
 import kotlinx.coroutines.Dispatchers
@@ -34,18 +32,6 @@ class TorrentViewModel(
 
     init {
         registerClass(this)
-    }
-
-    fun addMagnet(magnetParser: MagnetParser) {
-        if (torrentHashMap.containsKey(magnetParser.infoHash)) return
-
-        engine.addMagnet(magnetParser)
-    }
-
-    fun addTorrent(meta: TorrentMetadata) {
-        if (torrentHashMap.containsKey(meta.infoHash.toString())) return
-
-        engine.addTorrent(meta)
     }
 
 

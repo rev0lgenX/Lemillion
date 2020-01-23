@@ -3,85 +3,46 @@ package com.revolgenx.weaverx.dialog
 import android.content.ClipboardManager
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
-import com.afollestad.materialdialogs.LayoutMode
+import androidx.core.content.res.ResourcesCompat
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.WhichButton
 import com.afollestad.materialdialogs.actions.setActionButtonEnabled
-import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.callbacks.onPreShow
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
-import com.afollestad.materialdialogs.files.fileChooser
 import com.afollestad.materialdialogs.input.InputCallback
+import com.afollestad.materialdialogs.input.getInputLayout
+import com.afollestad.materialdialogs.input.input
 import com.afollestad.materialdialogs.utils.MDUtil.textChanged
 import com.revolgenx.weaverx.R
-import com.revolgenx.weaverx.activity.MainActivity
-import com.revolgenx.weaverx.core.preference.storagePath
-import com.revolgenx.weaverx.core.torrent.common.MagnetParser
-import com.revolgenx.weaverx.core.torrent.common.TorrentParser
-import com.revolgenx.weaverx.core.util.makeToast
 import kotlinx.android.synthetic.main.input_layout.view.*
-import org.apache.commons.io.IOUtils
-import timber.log.Timber
-import java.io.FileInputStream
-import java.io.IOException
-import java.text.ParseException
 
-fun MainActivity.openMagnetDialog() {
-    MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
-        title(R.string.magnet_link)
-        inputDialog(this@openMagnetDialog) { _, text ->
-            try {
-                MagnetParser().parse(text.toString()).let {
-                    it.path = storagePath(context)
-                    getTorrentTab().addMagnet(it)
-                }
-                dismiss()
-            } catch (e: ParseException) {
-                Timber.e(e)
-                makeToast(resId = R.string.unable_to_parse_magnet)
-            } catch (e: Exception) {
-                Timber.e(e)
-                makeToast(resId = R.string.unable_to_parse_magnet)
-            }
-        }
 
-        positiveButton(R.string.ok) {
-            it.noAutoDismiss()
-        }
-        negativeButton(R.string.cancel)
-    }
-}
-
-fun MainActivity.openFileChooser() {
+fun Context.showErrorDialog(error: String) {
     MaterialDialog(this).show {
-        fileChooser { _, file ->
-            if (file.extension == "torrent") {
-                try {
-                    TorrentParser().parseFromFile(file, storagePath(context))?.let {
-                        getTorrentTab().addTorrent(it)
-                    }
-//                    val meta = TorrentMeta().apply {
-//                        dataBlob = IOUtils.toByteArray(FileInputStream(file))
-//                        path = storagePath(context)
-//                    }
-                    dismiss()
-                } catch (e: IOException) {
-                    Timber.e(e)
-                    makeToast(getString(R.string._unable_to_parse_file))
-                } catch (e: Exception) {
-                    Timber.e(e)
-                    makeToast(getString(R.string._unable_to_parse_file))
-                }
-            } else {
-                makeToast(getString(R.string._unable_to_parse_file))
-            }
-        }
-        positiveButton(R.string.ok) { it.noAutoDismiss() }
-        negativeButton(R.string.cancel)
+        title(R.string.error)
+        message(text = error)
+        positiveButton(R.string.ok)
     }
 }
 
+fun Context.showInputDialog(
+    titleRes: Int? = null,
+    prefill: CharSequence? = null,
+    callback: (text: String) -> Unit?
+) {
+    MaterialDialog(this).show {
+        title(titleRes)
+        input(prefill = prefill) { materialDialog, charSequence ->
+            callback.invoke(charSequence.toString())
+        }
+        getInputLayout().apply {
+            typeface = ResourcesCompat.getFont(context, R.font.open_sans_regular)
+        }
+        positiveButton(res = R.string.done)
+        negativeButton(R.string.cancel)
+    }
+}
 
 fun MaterialDialog.inputDialog(
     context: Context,

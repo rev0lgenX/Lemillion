@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/torrentDismissLayout"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:layout_alignParentBottom="true">
+
+    <TextView
+        android:id="@+id/addTorrentOkTv"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:fontFamily="@font/open_sans_regular"
+        android:gravity="center"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:text="@string/ok"
+        android:textAllCaps="true"
+        android:textColor="?android:textColorPrimary"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/addTorrentCancelTv"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_toStartOf="@id/addTorrentOkTv"
+        android:layout_toLeftOf="@id/addTorrentOkTv"
+        android:fontFamily="@font/open_sans_regular"
+        android:gravity="center"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:text="@string/cancel"
+        android:textAllCaps="true"
+        android:textColor="?android:textColorPrimary"
+        android:textSize="16sp" />
+</RelativeLayout>

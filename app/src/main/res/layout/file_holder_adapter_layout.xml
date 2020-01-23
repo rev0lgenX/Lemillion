@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/torrentFileLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="6dp">
+
+    <CheckBox
+        android:id="@+id/torrentFileCheck"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical" />
+
+    <TextView
+        android:id="@+id/torrentFileNameTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/open_sans_regular"
+        android:maxLines="2"
+        android:padding="5dp"
+        android:text="demo fragmentdemo fragmentdemo fragment.avi"
+        android:textColor="?android:textColorPrimary" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/torrentFileSizeTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/open_sans_regular"
+            android:textColor="?android:textColorPrimary"
+            android:text="3.1Gb"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/torrentFilePercentTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/open_sans_regular"
+            android:textColor="?android:textColorPrimary"
+            android:text="80%"
+            android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>

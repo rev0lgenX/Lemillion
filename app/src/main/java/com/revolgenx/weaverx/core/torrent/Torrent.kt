@@ -28,6 +28,7 @@ class Torrent {
     var state: String = ""
         get() {
             Timber.d("get state")
+            if(handle == -1L) return field
             return Base64.encodeToString(Libtorrent.saveTorrent(handle), Base64.DEFAULT)
         }
         set(value) {
@@ -38,19 +39,25 @@ class Torrent {
 
     var path: String = ""
 
-    val name: String
+    var name: String = ""
         get() {
             Timber.d("string handle $handle")
-            return Libtorrent.torrentName(handle)
+            if(handle == -1L) return field
+            return Libtorrent.torrentName(handle).takeIf { it.isNotEmpty() } ?: hash
         }
 
     val progress: Float
         get() {
             Timber.d("progress $handle")
+            if(handle == -1L) return 0f
             return if (Libtorrent.metaTorrent(handle)) {
-                val p = (Libtorrent.torrentPendingBytesLength(handle).takeIf { it != 0L } ?: 1L)
-                val r = Libtorrent.torrentPendingBytesCompleted(handle) * 100f / p
-                r
+                val p = Libtorrent.torrentPendingBytesLength(handle)
+                if (p == 0L) {
+                    0f
+                } else {
+                    val r = Libtorrent.torrentPendingBytesCompleted(handle) * 100f / p
+                    r
+                }
             } else 0f
         }
 
@@ -68,44 +75,51 @@ class Torrent {
         }
 
     var status: TorrentStatus = TorrentStatus.UNKNOWN
-        get() = when (Libtorrent.torrentStatus(handle)) {
-            Libtorrent.StatusPaused -> {
-                TorrentStatus.PAUSED
+        get() {
+            if(handle == -1L) return TorrentStatus.UNKNOWN
+            return when (Libtorrent.torrentStatus(handle)) {
+                Libtorrent.StatusPaused -> {
+                    TorrentStatus.PAUSED
+                }
+                Libtorrent.StatusChecking -> {
+                    TorrentStatus.CHECKING
+                }
+                Libtorrent.StatusDownloading -> {
+                    TorrentStatus.DOWNLOADING
+                }
+                Libtorrent.StatusQueued -> {
+                    TorrentStatus.QUEUE
+                }
+                Libtorrent.StatusSeeding -> {
+                    TorrentStatus.SEEDING
+                }
+                else -> TorrentStatus.UNKNOWN
             }
-            Libtorrent.StatusChecking -> {
-                TorrentStatus.CHECKING
-            }
-            Libtorrent.StatusDownloading -> {
-                TorrentStatus.DOWNLOADING
-            }
-            Libtorrent.StatusQueued -> {
-                TorrentStatus.QUEUE
-            }
-            Libtorrent.StatusSeeding -> {
-                TorrentStatus.SEEDING
-            }
-            else -> TorrentStatus.UNKNOWN
         }
 
     val totalSize: Long
         get() {
+            if(handle == -1L) return 0
             return Libtorrent.torrentPendingBytesLength(handle)
         }
 
     //TODO: CHECK FILE EXITS | CHECK STORAGE EJECTED CONDITION| READONLY | TORRENT_ALTERED | FREE_SPACE
     fun start() {
+        if (handle == -1L) return
+
+        Timber.d("start $handle")
         if (!Libtorrent.startTorrent(handle)) {
             Timber.e(Libtorrent.error())
             return
         }
 
-        val b = Libtorrent.torrentStats(handle)
-        downloaded.start(b.downloaded)
-        uploaded.start(b.uploaded)
+        update()
     }
 
     fun stop() {
+        if (handle == -1L) return
         Libtorrent.stopTorrent(handle)
+        update()
     }
 
     fun remove(withFiles: Boolean) {
@@ -114,15 +128,15 @@ class Torrent {
                 for (i in 0 until Libtorrent.torrentFilesCount(handle)) {
                     Storage.delete(File(path, Libtorrent.torrentFiles(handle, i).path))
                 }
-
-            Handler(Looper.getMainLooper()).postDelayed({
-                Libtorrent.removeTorrent(handle)
-            }, 300L)
+            Libtorrent.removeTorrent(handle)
+            handle = -1
         }
 
     }
 
     fun update() {
+        if (handle == -1L) return
+
         val b = Libtorrent.torrentStats(handle)
         downloaded.step(b.downloaded)
         uploaded.step(b.uploaded)

@@ -35,7 +35,7 @@ abstract class SelectableAdapter<VH : RecyclerView.ViewHolder, T : Any>(diffUtil
         selectedItems.clear()
     }
 
-    fun getSelectedItems(): MutableList<Int> {
+    fun getSelectedItems(): List<Int> {
         val items = mutableListOf<Int>()
         for (i in 0 until selectedItems.size()) {
             items.add(selectedItems.keyAt(i))
@@ -50,7 +50,7 @@ abstract class SelectableAdapter<VH : RecyclerView.ViewHolder, T : Any>(diffUtil
     }
 
     fun selectAll() {
-        for (i in 0..currentList.size) {
+        for (i in 0 until currentList.size) {
             selectedItems.put(i, true)
         }
         notifyDataSetChanged()

@@ -1,7 +1,8 @@
 package com.revolgenx.weaverx.core.util
 
-import android.app.Activity
 import android.content.Context
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -37,17 +38,31 @@ fun Fragment.makeToast(msg: String? = null, resId: Int? = null) {
 }
 
 
-fun TextView.showProgress(@StringRes str: Int = 0, b: Boolean = false, progColor: Int? = null) {
+fun TextView.showProgress(@StringRes resId: Int = 0, b: Boolean = false, progColor: Int? = null) {
     if (b) {
         this.showProgress {
-            buttonTextRes = str
+            buttonTextRes = resId
             progressRadiusRes = R.dimen.progress_radius_dimen
             progressStrokeRes = R.dimen.progress_stroke_dimen
             progressColor = progColor ?: ContextCompat.getColor(context, R.color.colorAccent)
         }
     } else {
-        this.hideProgress(str)
+        this.hideProgress(resId)
     }
 }
+
+
+fun makeTextView(context:Context) = TextView(context).apply {
+    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+}
+
+
+
+inline fun Context.dip(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+inline fun Context.dp(value: Int): Float = (value * resources.displayMetrics.density)
+
+inline fun View.dip(value: Int) = context.dip(value)
+inline fun View.dp(value: Int) = context.dp(value)
+
 
 

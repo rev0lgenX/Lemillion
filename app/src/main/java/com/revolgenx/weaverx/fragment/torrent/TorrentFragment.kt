@@ -20,8 +20,6 @@ import com.revolgenx.weaverx.core.torrent.Torrent
 import com.revolgenx.weaverx.core.torrent.TorrentEngine
 import com.revolgenx.weaverx.core.torrent.TorrentProgressListener
 import com.revolgenx.weaverx.core.torrent.TorrentStatus.*
-import com.revolgenx.weaverx.core.torrent.common.MagnetParser
-import com.revolgenx.weaverx.core.torrent.common.TorrentMetadata
 import com.revolgenx.weaverx.core.util.*
 import com.revolgenx.weaverx.event.*
 import com.revolgenx.weaverx.fragment.BaseRecyclerFragment
@@ -32,6 +30,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
 
 class TorrentFragment :
     BaseRecyclerFragment<TorrentFragment.TorrentRecyclerAdapter.TorrentViewHolder, Torrent>() {
@@ -217,15 +216,6 @@ class TorrentFragment :
         super.onDestroy()
     }
 
-    fun addMagnet(it: MagnetParser) {
-        viewModel.addMagnet(it)
-    }
-
-    fun addTorrent(it: TorrentMetadata) {
-        viewModel.addTorrent(it)
-    }
-
-
     inner class TorrentRecyclerAdapter :
         SelectableAdapter<TorrentRecyclerAdapter.TorrentViewHolder, Torrent>(object :
             DiffUtil.ItemCallback<Torrent>() {
@@ -311,7 +301,7 @@ class TorrentFragment :
 
                     torrentNameTv.text = torrent!!.name
                     torrentProgressBar.progress = torrent!!.progress
-                    torrentProgressBar.labelText = "%.1f".format(torrent!!.progress)
+                    torrentProgressBar.labelText = torrent!!.progress.toInt().toString()
                     torrentFirstTv.text = torrent!!.status.name
                     pausePlayIv.setImageResource(
                         when (torrent!!.status) {

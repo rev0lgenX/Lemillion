@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/addTorrentAppbarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="?actionBarSize"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
+            android:layout_marginLeft="10dp"
+            android:fontFamily="@font/open_sans_semi_bold"
+            android:gravity="center_vertical"
+            android:text="@string/add_torrent"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="18sp" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/addTorrentNestedLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/addTorrentAppbarLayout">
+
+        <LinearLayout
+            android:id="@+id/addTorrentLinearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@id/torrentDismissLayout"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="10dp"
+            android:orientation="vertical">
+
+
+            <com.revolgenx.weaverx.view.TitleTextView
+                android:id="@+id/torrentMetaNameTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:descriptionDrawable="@drawable/ic_edit"
+                app:showDrawable="true"
+                app:titleName="@string/name" />
+
+            <com.revolgenx.weaverx.view.TitleTextView
+                android:id="@+id/torrentMetaHashTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:descriptionDrawable="@drawable/ic_copy"
+                app:showDrawable="true"
+                app:titleName="@string/hash" />
+
+            <com.revolgenx.weaverx.view.TitleTextView
+                android:id="@+id/torrentPathMetaTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:descriptionDrawable="@drawable/ic_folder"
+                app:showDrawable="true"
+                app:titleName="@string/path" />
+
+
+            <com.revolgenx.weaverx.view.TitleTextView
+                android:id="@+id/torrentSizeTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:titleName="@string/size" />
+
+            <com.revolgenx.weaverx.view.TitleTextView
+                android:id="@+id/torrentPiecesTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:titleName="@string/pieces"/>
+
+            <com.revolgenx.weaverx.view.PiecesView
+                android:id="@+id/piecesView"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="10dp"
+                android:background="@color/gray"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/open_sans_light"
+                android:text="@string/files"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="12sp" />
+
+
+            <com.github.axet.androidlibrary.widgets.TreeRecyclerView
+                android:id="@+id/treeRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <RelativeLayout
+        android:id="@+id/torrentDismissLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/addTorrentNestedLayout"
+        app:layout_constraintVertical_bias="0">
+
+
+        <TextView
+            android:id="@+id/downloadMetadataTv"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:fontFamily="@font/open_sans_regular"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/download_metadata"
+            android:textAllCaps="true"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="14sp" />
+
+
+        <TextView
+            android:id="@+id/addTorrentOkTv"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:fontFamily="@font/open_sans_regular"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:text="@string/ok"
+            android:textAllCaps="true"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/addTorrentCancelTv"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_toStartOf="@id/addTorrentOkTv"
+            android:layout_toLeftOf="@id/addTorrentOkTv"
+            android:fontFamily="@font/open_sans_regular"
+            android:gravity="center"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:text="@string/cancel"
+            android:textAllCaps="true"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="14sp" />
+    </RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

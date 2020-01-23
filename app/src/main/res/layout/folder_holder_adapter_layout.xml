@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/torrentFolderLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <CheckBox
+        android:id="@+id/torrentFolderCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical" />
+
+    <TextView
+        android:id="@+id/torrentFolderNameTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:fontFamily="@font/open_sans_regular"
+        android:padding="5dp"
+        android:text="./metadata"
+        android:textColor="@color/textColorPrimary" />
+
+    <TextView
+        android:id="@+id/torrentFolderSizeTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:fontFamily="@font/open_sans_regular"
+        android:text="3Gb"
+        android:textColor="@color/textColorPrimary"
+        android:textSize="12sp" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/torrentFolderExpandIv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:tint="?attr/iconColor"
+        app:srcCompat="@drawable/ic_arrow_down" />
+</LinearLayout>
