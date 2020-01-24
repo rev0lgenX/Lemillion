@@ -7,7 +7,7 @@
 
 
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/addTorrentAppbarLayout"
+        android:id="@+id/addBookAppbarLayout"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
         app:layout_constraintTop_toTopOf="parent">
@@ -19,96 +19,69 @@
             android:layout_marginLeft="10dp"
             android:fontFamily="@font/open_sans_semi_bold"
             android:gravity="center_vertical"
-            android:text="@string/torrent_composer"
+            android:text="@string/file_composer"
             android:textColor="?android:textColorPrimary"
             android:textSize="18sp" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
-
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/addTorrentNestedLayout"
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/errorTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/addTorrentAppbarLayout">
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:drawablePadding="10dp"
+        android:fontFamily="@font/open_sans_regular"
+        android:text="@string/task_exists_please_change_the_file_name_or_path_and_continue"
+        android:textColor="?android:textColorPrimary"
+        app:drawableLeftCompat="@drawable/ic_info"
+        app:drawableTint="@color/red"
+        android:background="@color/gray"
+        android:visibility="gone"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/addBookAppbarLayout" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/addBookNestedLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/errorTextView"
+        android:layout_marginTop="10dp">
 
         <LinearLayout
-            android:id="@+id/addTorrentLinearLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@id/torrentDismissLayout"
+            android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
-            android:layout_marginBottom="10dp"
             android:orientation="vertical">
 
-
             <com.revolgenx.weaverx.view.TitleTextView
-                android:id="@+id/torrentMetaNameTv"
+                android:id="@+id/bookNameTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="10dp"
                 app:descriptionDrawable="@drawable/ic_edit"
                 app:showDrawable="true"
-                app:titleName="@string/name" />
+                app:titleName="Name" />
 
             <com.revolgenx.weaverx.view.TitleTextView
-                android:id="@+id/torrentMetaHashTv"
+                android:id="@+id/bookPathTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                app:descriptionDrawable="@drawable/ic_copy"
-                app:showDrawable="true"
-                app:titleName="@string/hash" />
-
-            <com.revolgenx.weaverx.view.TitleTextView
-                android:id="@+id/torrentPathMetaTv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="10dp"
                 app:descriptionDrawable="@drawable/ic_folder"
                 app:showDrawable="true"
-                app:titleName="@string/path" />
-
-
-            <com.revolgenx.weaverx.view.TitleTextView
-                android:id="@+id/torrentSizeTv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                app:titleName="@string/size" />
+                app:titleName="Name" />
 
             <com.revolgenx.weaverx.view.TitleTextView
-                android:id="@+id/torrentPiecesTv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                app:titleName="@string/pieces"/>
-
-            <com.revolgenx.weaverx.view.PiecesView
-                android:id="@+id/piecesView"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="10dp"
-                android:background="@color/gray"/>
-
-            <TextView
+                android:id="@+id/bookUrlTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:fontFamily="@font/open_sans_light"
-                android:text="@string/files"
-                android:textColor="?android:textColorPrimary"
-                android:textSize="12sp" />
-
-
-            <com.github.axet.androidlibrary.widgets.TreeRecyclerView
-                android:id="@+id/treeRecyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-
+                app:descriptionDrawable="@drawable/ic_edit"
+                app:showDrawable="true"
+                app:titleName="Name" />
 
         </LinearLayout>
 
@@ -117,16 +90,16 @@
     <RelativeLayout
         android:id="@+id/torrentDismissLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/addTorrentNestedLayout"
+        app:layout_constraintTop_toBottomOf="@+id/addBookNestedLayout"
+        android:layout_marginTop="20dp"
         app:layout_constraintVertical_bias="0">
 
-
         <TextView
-            android:id="@+id/downloadMetadataTv"
+            android:id="@+id/checkingTv"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="50dp"
             android:layout_alignParentStart="true"
             android:layout_alignParentLeft="true"
             android:fontFamily="@font/open_sans_regular"
@@ -136,30 +109,31 @@
             android:text="@string/download_metadata"
             android:textAllCaps="true"
             android:textColor="?android:textColorPrimary"
+            android:visibility="gone"
             android:textSize="14sp" />
 
 
         <TextView
-            android:id="@+id/addTorrentOkTv"
+            android:id="@+id/addBookTv"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="50dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:fontFamily="@font/open_sans_regular"
             android:gravity="center"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
-            android:text="@string/ok"
+            android:text="@string/download"
             android:textAllCaps="true"
             android:textColor="?android:textColorPrimary"
             android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/addTorrentCancelTv"
+            android:id="@+id/cancelBookTv"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_toStartOf="@id/addTorrentOkTv"
-            android:layout_toLeftOf="@id/addTorrentOkTv"
+            android:layout_height="50dp"
+            android:layout_toStartOf="@id/addBookTv"
+            android:layout_toLeftOf="@id/addBookTv"
             android:fontFamily="@font/open_sans_regular"
             android:gravity="center"
             android:paddingLeft="20dp"

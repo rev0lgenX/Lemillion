@@ -49,4 +49,19 @@
     <string name="paused">Paused</string>
     <string name="connecting">Connecting</string>
     <string name="waiting">Waiting</string>
+    <string name="checking">Checking</string>
+    <string name="file_composer">File Composer</string>
+    <string name="torrent_composer">Torrent Composer</string>
+    <string name="downloading_meta">Downloading meta</string>
+    <string name="input_url">Input Url</string>
+    <string name="download">Download</string>
+    <string name="rename_file">Rename file</string>
+    <string name="change_path">Change Path</string>
+    <string name="delet_task">Delete task</string>
+    <string name="task_exists">Task exists</string>
+    <string name="file_exists">File exists</string>
+    <string name="task_exists_please_change_the_file_name_or_path_and_continue">task exists please change the file name or path and continue</string>
+    <string name="unresolved_issues">Please resolve the issue first.</string>
+    <string name="enter_file_name">Enter file name</string>
+    <string name="task_with_same_url_exists">Task with same url exists.</string>
 </resources>

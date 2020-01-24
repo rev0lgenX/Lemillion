@@ -4,9 +4,11 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
 import androidx.core.content.res.ResourcesCompat
+import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.WhichButton
 import com.afollestad.materialdialogs.actions.setActionButtonEnabled
+import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.callbacks.onPreShow
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
@@ -14,7 +16,9 @@ import com.afollestad.materialdialogs.input.InputCallback
 import com.afollestad.materialdialogs.input.getInputLayout
 import com.afollestad.materialdialogs.input.input
 import com.afollestad.materialdialogs.utils.MDUtil.textChanged
+import com.arialyy.aria.util.CheckUtil
 import com.revolgenx.weaverx.R
+import com.revolgenx.weaverx.activity.MainActivity
 import kotlinx.android.synthetic.main.input_layout.view.*
 
 
@@ -23,6 +27,26 @@ fun Context.showErrorDialog(error: String) {
         title(R.string.error)
         message(text = error)
         positiveButton(R.string.ok)
+    }
+}
+
+
+fun MainActivity.openLinkInputDialog(prefill: String? = null) {
+    MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
+        title(R.string.input_url)
+        inputDialog(this.context, prefill) { _, text ->
+            if (CheckUtil.checkUrl(text.toString())) {
+                AddBookBottomSheetDialog.newInstance(text.toString())
+                    .show(supportFragmentManager, "add_book_fragment_tag")
+                dismiss()
+            }
+        }
+
+        noAutoDismiss()
+        positiveButton(R.string.ok)
+        negativeButton(R.string.cancel) {
+            dismiss()
+        }
     }
 }
 
@@ -46,6 +70,7 @@ fun Context.showInputDialog(
 
 fun MaterialDialog.inputDialog(
     context: Context,
+    prefill: CharSequence? = null,
     allowEmpty: Boolean = false,
     handleActionButton: Boolean = false,
     textChangeCallback: ((CharSequence) -> Unit)? = null,
@@ -71,6 +96,10 @@ fun MaterialDialog.inputDialog(
         if (callback != null)
             positiveButton { callback.invoke(this@inputDialog, et.text ?: "") }
 
+
+        if (prefill != null) {
+            et.setText(prefill)
+        }
 
         et.textChanged {
             textChangeCallback?.invoke(it)

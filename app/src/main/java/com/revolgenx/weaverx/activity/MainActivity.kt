@@ -16,6 +16,8 @@ import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.files.fileChooser
+import com.arialyy.aria.core.Aria
+import com.arialyy.aria.core.common.HttpOption
 import com.google.android.material.snackbar.Snackbar
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.listener.multi.SnackbarOnAnyDeniedMultiplePermissionsListener
@@ -129,6 +131,7 @@ class MainActivity : AppCompatActivity() {
                     R.id.linkId -> {
                         close()
                         if (checkPermission()) {
+                            openLinkInputDialog()
 //                            openPageComposerDialog { page, start ->
 //                                getBookTab().addPage(page, start)
 //                            }
@@ -171,6 +174,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+
 
     private fun openFileChooserForLib() {
         MaterialDialog(this).show {

@@ -9,9 +9,10 @@
         <attr name="progressBarForeground" format="reference"/>
         <attr name="progressBarBackground" format="reference"/>
         <attr name="fileBackgroundDark" format="color"/>
+        <attr name="pausePlayColor" format="color"/>
     </declare-styleable>
 
-    <declare-styleable name="TitleTextView_Style">
+    <declare-styleable name="TitleTextView">
         <attr name="titleName" format="string"/>
         <attr name="showDrawable" format="boolean"/>
         <attr name="descriptionDrawable" format="reference"/>

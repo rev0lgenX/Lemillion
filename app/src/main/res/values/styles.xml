@@ -43,6 +43,8 @@
 
         <!--file color-->
         <item name="fileBackgroundDark">@color/colorPrimaryDark</item>
+
+        <item name="pausePlayColor">@color/circleColor</item>
     </style>
 
     <style name="BaseTheme.Dark" parent="BaseTheme">
@@ -85,6 +87,7 @@
         <!--file color-->
         <item name="fileBackgroundDark">@color/colorPrimaryInverse</item>
 
+        <item name="pausePlayColor">@color/circleColorDark</item>
 
     </style>
 

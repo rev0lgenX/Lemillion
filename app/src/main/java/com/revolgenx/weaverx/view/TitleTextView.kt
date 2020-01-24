@@ -2,7 +2,6 @@ package com.revolgenx.weaverx.view
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Build
 import android.text.TextUtils
 import android.util.AttributeSet
@@ -41,13 +40,13 @@ class TitleTextView(context: Context, attributeSet: AttributeSet?, defStyle: Int
 
         var titleName = ""
         attributeSet?.let {
-            context.theme.obtainStyledAttributes(it, R.styleable.TitleTextView_Style, 0, 0)
+            context.theme.obtainStyledAttributes(it, R.styleable.TitleTextView, 0, 0)
                 .apply {
-                    titleName = getString(R.styleable.TitleTextView_Style_titleName) ?: ""
-                    showDrawable = getBoolean(R.styleable.TitleTextView_Style_showDrawable, false)
+                    titleName = getString(R.styleable.TitleTextView_titleName) ?: ""
+                    showDrawable = getBoolean(R.styleable.TitleTextView_showDrawable, false)
                     if (showDrawable)
                         imageResource =
-                            getResourceId(R.styleable.TitleTextView_Style_descriptionDrawable, 0)
+                            getResourceId(R.styleable.TitleTextView_descriptionDrawable, 0)
                 }
         }
 

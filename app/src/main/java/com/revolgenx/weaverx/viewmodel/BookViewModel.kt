@@ -16,7 +16,7 @@ class BookViewModel() : ViewModel() {
     private val bookHashMap = mutableMapOf<Long, Book>()
     fun getBooks() {
         viewModelScope.launch(Dispatchers.IO) {
-            Aria.download(this).taskList.map {
+            Aria.download(this).taskList?.map {
                 bookHashMap[it.id] = Book().apply { entity = it }
             }
             bookResource.postValue(Resource.success(bookHashMap.values.toList()))
@@ -24,6 +24,7 @@ class BookViewModel() : ViewModel() {
     }
 
     override fun onCleared() {
+        bookHashMap.clear()
         super.onCleared()
     }
 

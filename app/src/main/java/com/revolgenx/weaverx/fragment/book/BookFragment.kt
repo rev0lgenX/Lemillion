@@ -19,7 +19,8 @@ import com.revolgenx.weaverx.core.book.Book
 import com.revolgenx.weaverx.core.util.Status
 import com.revolgenx.weaverx.fragment.BaseRecyclerFragment
 import com.revolgenx.weaverx.viewmodel.BookViewModel
-import kotlinx.android.synthetic.main.book_recycler_adapter_layout.*
+import kotlinx.android.synthetic.main.base_recycler_view_layout.view.*
+import kotlinx.android.synthetic.main.book_recycler_adapter_layout.view.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import java.io.File
@@ -48,6 +49,7 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        view.progressText.visibility = View.GONE
         adapter = BookRecyclerAdapter()
     }
 
@@ -63,6 +65,7 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
         if (savedInstanceState == null) {
             viewModel.getBooks()
         }
+
     }
 
 
@@ -127,14 +130,21 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
     }
 
     inner class BookRecyclerAdapter :
-            SelectableAdapter<BookRecyclerAdapter.BookViewHolder, Book>(object :
-                    DiffUtil.ItemCallback<Book>() {
-                override fun areItemsTheSame(oldItem: Book, newItem: Book): Boolean = oldItem == newItem
-                override fun areContentsTheSame(oldItem: Book, newItem: Book): Boolean = oldItem == newItem
-            }) {
+        SelectableAdapter<BookRecyclerAdapter.BookViewHolder, Book>(object :
+            DiffUtil.ItemCallback<Book>() {
+            override fun areItemsTheSame(oldItem: Book, newItem: Book): Boolean = oldItem == newItem
+            override fun areContentsTheSame(oldItem: Book, newItem: Book): Boolean =
+                oldItem == newItem
+        }) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookViewHolder =
-                BookViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.book_recycler_adapter_layout, parent, false))
+            BookViewHolder(
+                LayoutInflater.from(parent.context).inflate(
+                    R.layout.book_recycler_adapter_layout,
+                    parent,
+                    false
+                )
+            )
 
         override fun onBindViewHolder(holder: BookViewHolder, position: Int) {
             holder.bind(getItem(position))
@@ -168,14 +178,16 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                     pageSpeedTv.text = book!!.entity!!.convertSpeed
                     pageProgressBar.progress = book!!.entity!!.percent.toFloat()
                     pageProgressBar.labelText = book!!.entity!!.percent.toString()
-                    pausePlayIv.setImageResource(when (book!!.entity!!.state) {
-                        IEntity.STATE_RUNNING, IEntity.STATE_WAIT, IEntity.STATE_PRE, IEntity.STATE_POST_PRE -> {
-                            R.drawable.ic_pause
+                    pausePlayIv.setImageResource(
+                        when (book!!.entity!!.state) {
+                            IEntity.STATE_RUNNING, IEntity.STATE_WAIT, IEntity.STATE_PRE, IEntity.STATE_POST_PRE -> {
+                                R.drawable.ic_pause
+                            }
+                            else -> {
+                                R.drawable.ic_play
+                            }
                         }
-                        else ->{
-                            R.drawable.ic_play
-                        }
-                    })
+                    )
 
                     pageStatusTv.text = when (book!!.entity!!.state) {
                         IEntity.STATE_RUNNING -> {
