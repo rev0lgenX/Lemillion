@@ -1,16 +1,14 @@
 package com.revolgenx.weaverx.core.torrent
 
-import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.util.Base64
-import androidx.core.net.toUri
 import com.github.axet.androidlibrary.app.Storage
-import com.github.axet.wget.SpeedInfo
 import com.revolgenx.weaverx.core.db.torrent.TorrentEntity
+import com.revolgenx.weaverx.core.torrent.util.SpeedInfo
 import libtorrent.Libtorrent
 import timber.log.Timber
 import java.io.File
+import java.util.*
+import kotlin.math.ceil
 
 typealias TorrentProgressListener = ((torrent: Torrent) -> Unit)?
 
@@ -28,7 +26,7 @@ class Torrent {
     var state: String = ""
         get() {
             Timber.d("get state")
-            if(handle == -1L) return field
+            if (handle == -1L) return field
             return Base64.encodeToString(Libtorrent.saveTorrent(handle), Base64.DEFAULT)
         }
         set(value) {
@@ -42,27 +40,36 @@ class Torrent {
     var name: String = ""
         get() {
             Timber.d("string handle $handle")
-            if(handle == -1L) return field
-            return Libtorrent.torrentName(handle).takeIf { it.isNotEmpty() } ?: hash
+            if (handle == -1L) return field
+
+            return if (field.isEmpty())
+                Libtorrent.torrentName(handle).takeIf { it.isNotEmpty() } ?: hash
+            else field
         }
 
     val progress: Float
         get() {
             Timber.d("progress $handle")
-            if(handle == -1L) return 0f
+            if (handle == -1L) return 0f
             return if (Libtorrent.metaTorrent(handle)) {
                 val p = Libtorrent.torrentPendingBytesLength(handle)
                 if (p == 0L) {
                     0f
                 } else {
-                    val r = Libtorrent.torrentPendingBytesCompleted(handle) * 100f / p
-                    r
+                    ceil(Libtorrent.torrentPendingBytesCompleted(handle) * 100f / p)
                 }
             } else 0f
         }
 
+    val completed: Boolean
+        get() {
+            return Libtorrent.pendingCompleted(handle)
+        }
+
     val downloaded = SpeedInfo()
     val uploaded = SpeedInfo()
+
+    var createDate: Date = Date(System.currentTimeMillis())
 
     val downloadSpeed: Int
         get() {
@@ -76,7 +83,7 @@ class Torrent {
 
     var status: TorrentStatus = TorrentStatus.UNKNOWN
         get() {
-            if(handle == -1L) return TorrentStatus.UNKNOWN
+            if (handle == -1L) return TorrentStatus.UNKNOWN
             return when (Libtorrent.torrentStatus(handle)) {
                 Libtorrent.StatusPaused -> {
                     TorrentStatus.PAUSED
@@ -99,7 +106,7 @@ class Torrent {
 
     val totalSize: Long
         get() {
-            if(handle == -1L) return 0
+            if (handle == -1L) return 0
             return Libtorrent.torrentPendingBytesLength(handle)
         }
 
@@ -107,7 +114,7 @@ class Torrent {
     fun start() {
         if (handle == -1L) return
 
-        Timber.d("start $handle")
+        Timber.d("sampleStart $handle")
         if (!Libtorrent.startTorrent(handle)) {
             Timber.e(Libtorrent.error())
             return
@@ -188,5 +195,5 @@ class Torrent {
         return hash.hashCode()
     }
 
-    fun toEntity() = TorrentEntity(hash, state, status, path)
+    fun toEntity() = TorrentEntity(hash, state, status, path, createDate)
 }

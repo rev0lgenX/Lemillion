@@ -15,10 +15,12 @@ import com.afollestad.materialdialogs.customview.getCustomView
 import com.afollestad.materialdialogs.input.InputCallback
 import com.afollestad.materialdialogs.input.getInputLayout
 import com.afollestad.materialdialogs.input.input
+import com.afollestad.materialdialogs.list.listItemsSingleChoice
 import com.afollestad.materialdialogs.utils.MDUtil.textChanged
 import com.arialyy.aria.util.CheckUtil
 import com.revolgenx.weaverx.R
 import com.revolgenx.weaverx.activity.MainActivity
+import com.revolgenx.weaverx.core.preference.getSorting
 import kotlinx.android.synthetic.main.input_layout.view.*
 
 
@@ -119,6 +121,19 @@ fun MaterialDialog.inputDialog(
                 inputEt.setText(pasteData)
             } else {
             }
+        }
+    }
+}
+
+inline fun MainActivity.makeSortDialog(crossinline callback: ((String, Int) -> Unit)) {
+    MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
+        title(R.string.sort)
+        val sorting = getSorting(context)
+        listItemsSingleChoice(
+            R.array.sort_array,
+            initialSelection = sorting
+        ) { dialog, index, text ->
+            callback.invoke(text.toString(), index)
         }
     }
 }

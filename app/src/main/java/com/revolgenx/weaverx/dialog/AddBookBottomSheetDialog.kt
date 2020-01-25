@@ -26,17 +26,18 @@ import kotlinx.android.synthetic.main.add_book_bottom_sheet_dialog_layout.*
 import timber.log.Timber
 import java.io.File
 import java.lang.Exception
+import java.net.HttpURLConnection
+import java.util.regex.Pattern
 
 class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
     private val urlKey = "url_key"
     private val pathKey = "path_key"
     private val nameKey = "name_key"
-    private val taskIdKey = "task_id_key"
+    private var taskId = -1L
 
     private var onPreComplete = false
 
-    private var taskId: Long = -1L
     private var url: String = ""
     private var path: String = ""
     private var name: String = ""
@@ -46,17 +47,21 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
 
     enum class TaskFailedCause {
-        NONE, TASK_EXIST, FILE_EXIST, SAME_URL, LOW_SPACE, UNKNOWN, FINDING
+        NONE, HTTP_NOT_FOUND, TASK_EXIST, FILE_EXIST, SAME_URL, LOW_SPACE, UNKNOWN, FINDING
     }
 
     companion object {
         fun newInstance(url: String) = AddBookBottomSheetDialog().apply {
             Timber.d("url $url")
             arguments = bundleOf(urlKey to url)
-            Aria.download(this).register()
         }
     }
 
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Aria.download(this).register()
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -76,16 +81,19 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
             path = storagePath(context!!)!!
             createAriaDownload()
         } else {
-            taskId = savedInstanceState.getLong(taskIdKey)
             name = savedInstanceState.getString(nameKey)!!
             path = savedInstanceState.getString(pathKey)!!
+            createAriaDownload()
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putLong(taskIdKey, taskId)
         outState.putString(nameKey, name)
         outState.putString(pathKey, path)
+        if (taskId != -1L){
+            Aria.download(this).load(taskId).cancel()
+        }
+
         super.onSaveInstanceState(outState)
     }
 
@@ -109,7 +117,10 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
                 errorTextView.text =
                     getString(R.string.task_exists_please_change_the_file_name_or_path_and_continue)
             }
-
+            TaskFailedCause.HTTP_NOT_FOUND -> {
+                errorTextView.visibility = View.VISIBLE
+                errorTextView.text = getString(R.string.http_not_found)
+            }
 
             TaskFailedCause.LOW_SPACE -> {
 
@@ -122,16 +133,17 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
                 errorTextView.visibility = View.VISIBLE
                 errorTextView.text = getString(R.string.unknown)
             }
-            TaskFailedCause.FINDING->{
+            TaskFailedCause.FINDING -> {
 
             }
         }
     }
 
+
     private fun addListener() {
         bookNameTv.setDrawableClickListener {
             MaterialDialog(this.context!!).show {
-                inputDialog(this.context, prefill = name) { materialDialog, charSequence ->
+                inputDialog(this.context, prefill = name) { _, charSequence ->
                     name = charSequence.toString()
                     createAriaDownload()
                 }
@@ -165,18 +177,21 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
                 makeToast(resId = R.string.unresolved_issues)
                 return@setOnClickListener
             }
+
             postEvent(BookAddedEvent(taskId))
             dialog?.dismiss()
+
         }
     }
 
 
-    @Download.onTaskStart
-    fun onTaskStart(task: DownloadTask) {
+    @Download.onTaskRunning
+    fun onTaskRunning(task: DownloadTask) {
         showStatusProgress(visibility = false)
         onPreComplete = true
         updateView()
-        Timber.d("ontask start")
+        Timber.d("ontask sampleStart")
+        failCause = TaskFailedCause.NONE
         Aria.download(this).load(task.entity.id).stop()
     }
 
@@ -185,9 +200,20 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
         failCause = TaskFailedCause.UNKNOWN
 
         Timber.e(e)
-        Timber.d("exception null ${e == null}")
+        Timber.d("exception null ${e == null} message ${e?.message}")
 
-        //2020-01-24 20:28:38.093 1872-1872/com.example.weaverx E/AddBookBottomSheetDialog: com.arialyy.aria.exception.AriaIOException: Aria Net Exception:任务下载失败，errorCode：404, url: http://ipv4.download.thinkbroadband.com/70MB.zip
+        if (e != null) {
+            val pattern = Pattern.compile("errorCode：([0-9]*)")
+            val matcher = pattern.matcher(e.message ?: "")
+            if (matcher.find()) {
+                e.message
+                val code = matcher.group(1)
+                if (code == HttpURLConnection.HTTP_NOT_FOUND.toString()) {
+                    failCause = TaskFailedCause.HTTP_NOT_FOUND
+                }
+            }
+        }
+
         showStatusProgress(R.string.failed)
         updateView()
     }
@@ -231,7 +257,10 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
         failCause = TaskFailedCause.FINDING
         updateView()
-        taskId = Aria.download(this).load(url).setFilePath(fullPath).create()
+        taskId = Aria.download(this).load(url).setFilePath(fullPath).setHighestPriority()
+        if (taskId != -1L) {
+            Aria.download(this).load(taskId).resume()
+        }
     }
 
     private fun showStatusProgress(
@@ -250,14 +279,26 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
 
     override fun onCancel(dialog: DialogInterface) {
+        removeTask()
+        Timber.d("oncancel")
         super.onCancel(dialog)
+    }
+
+    private fun removeTask() {
         if (taskId != -1L) {
             Aria.download(this).load(taskId).cancel()
         }
     }
 
+    override fun onDismiss(dialog: DialogInterface) {
+        Timber.d("dismiss task addbookdialog")
+        super.onDismiss(dialog)
+    }
+
+
     override fun onDestroy() {
         Aria.download(this).unRegister()
+        Timber.d("ondestroy addbook")
         super.onDestroy()
     }
 

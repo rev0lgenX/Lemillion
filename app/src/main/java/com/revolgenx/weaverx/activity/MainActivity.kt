@@ -1,36 +1,51 @@
 package com.revolgenx.weaverx.activity
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.Menu
+import android.view.MenuItem
 import androidx.annotation.ColorInt
+import androidx.appcompat.view.menu.MenuBuilder
+import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-import androidx.fragment.app.FragmentStatePagerAdapter
+import androidx.viewpager.widget.ViewPager
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.files.fileChooser
-import com.arialyy.aria.core.Aria
-import com.arialyy.aria.core.common.HttpOption
 import com.google.android.material.snackbar.Snackbar
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.listener.multi.SnackbarOnAnyDeniedMultiplePermissionsListener
 import com.leinardi.android.speeddial.SpeedDialActionItem
 import com.revolgenx.weaverx.R
+import com.revolgenx.weaverx.core.preference.setSorting
 import com.revolgenx.weaverx.core.preference.storagePath
+import com.revolgenx.weaverx.core.sorting.BaseSorting
+import com.revolgenx.weaverx.core.sorting.book.BookSorting
+import com.revolgenx.weaverx.core.sorting.book.BookSortingComparator
+import com.revolgenx.weaverx.core.sorting.torrent.TorrentSorting
+import com.revolgenx.weaverx.core.sorting.torrent.TorrentSortingComparator
 import com.revolgenx.weaverx.core.util.makeToast
+import com.revolgenx.weaverx.core.util.postEvent
 import com.revolgenx.weaverx.dialog.*
+import com.revolgenx.weaverx.event.ShutdownEvent
+import com.revolgenx.weaverx.fragment.BaseRecyclerFragment
 import com.revolgenx.weaverx.fragment.book.BookFragment
 import com.revolgenx.weaverx.fragment.torrent.TorrentFragment
 import kotlinx.android.synthetic.main.activity_main.*
 import libtorrent.Libtorrent
 import org.apache.commons.io.FileUtils
+import org.greenrobot.eventbus.EventBus
 import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
@@ -42,6 +57,29 @@ class MainActivity : AppCompatActivity() {
     @ColorInt
     var iconColor: Int = 0
 
+    private val queryKey = "query_key"
+    private var query = ""
+
+    private val pageChangeListener = object : ViewPager.OnPageChangeListener {
+        override fun onPageScrollStateChanged(state: Int) {
+        }
+
+        override fun onPageScrolled(
+            position: Int,
+            positionOffset: Float,
+            positionOffsetPixels: Int
+        ) {
+
+        }
+
+        override fun onPageSelected(position: Int) {
+            getTorrentTab().onPageSelected()
+            getBookTab().onPageSelected()
+            mainToolbar.collapseActionView()
+            query = ""
+        }
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +100,15 @@ class MainActivity : AppCompatActivity() {
         mainTabLayout.setupWithViewPager(viewPager)
         viewPager.currentItem = 0
         viewPager.adapter = adapter
+
+        savedInstanceState?.let {
+            it.getString(queryKey)?.let {
+                query = it
+                if (query.isNotEmpty()) {
+
+                }
+            }
+        }
 
     }
 
@@ -132,8 +179,8 @@ class MainActivity : AppCompatActivity() {
                         close()
                         if (checkPermission()) {
                             openLinkInputDialog()
-//                            openPageComposerDialog { page, start ->
-//                                getBookTab().addPage(page, start)
+//                            openPageComposerDialog { page, sampleStart ->
+//                                getBookTab().addPage(page, sampleStart)
 //                            }
 
 //                            openPage2ComposerDialog { page ->
@@ -176,7 +223,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     private fun openFileChooserForLib() {
         MaterialDialog(this).show {
             fileChooser { dialog, file ->
@@ -201,6 +247,125 @@ class MainActivity : AppCompatActivity() {
 
             negativeButton {
                 dismiss()
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(queryKey, query)
+        super.onSaveInstanceState(outState)
+    }
+
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        this.menuInflater.inflate(R.menu.main_menu, menu)
+
+        if (menu is MenuBuilder) {
+            menu.setOptionalIconsVisible(true)
+        }
+
+        menu?.findItem(R.id.search_menu)?.let { item ->
+            (item.actionView as SearchView).let {
+
+                it.setOnQueryTextListener(object :
+                    SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean {
+                        return false
+                    }
+
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        query = newText ?: ""
+                        val fragment = getTabFragmentFromPos(viewPager.currentItem)
+                        (fragment as BaseRecyclerFragment<*, *>).search(query)
+                        return true
+                    }
+                })
+
+                if (query.isNotEmpty()) {
+                    it.isIconified = false
+                }
+            }
+        }
+
+        menu?.iterator()?.forEach {
+            if (it.icon != null)
+                DrawableCompat.wrap(it.icon).apply {
+                    DrawableCompat.setTint(this, iconColor)
+                    it.icon = this
+                }
+        }
+
+        return true
+    }
+
+
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.search_menu -> {
+                true
+            }
+
+            R.id.resume_all_menu -> {
+                val currentTab = getCurrentTab()
+                (currentTab as BaseRecyclerFragment<*, *>).resumeAll()
+                true
+            }
+
+            R.id.pause_all_menu -> {
+                val currentTab = getCurrentTab()
+                (currentTab as BaseRecyclerFragment<*, *>).pauseAll()
+                true
+            }
+
+            R.id.sort_menu -> {
+                makeSortDialog { str, index ->
+                    val sort = str.split(" ")
+                    val currentTab = getTabFragmentFromPos(viewPager.currentItem)
+
+                    if (currentTab is TorrentFragment) {
+                        TorrentSortingComparator(
+                            TorrentSorting(
+                                TorrentSorting.SortingColumns.fromValue(sort[0])
+                                , BaseSorting.Direction.fromValue(sort[1])
+                            )
+                        ).let {
+                            currentTab.sort(it)
+                            setSorting(this, index)
+                        }
+                    } else if (currentTab is BookFragment) {
+                        BookSortingComparator(
+                            BookSorting(
+                                BookSorting.SortingColumns.fromValue(sort[0])
+                                , BaseSorting.Direction.fromValue(sort[1])
+                            )
+                        ).let {
+                            currentTab.sort(it)
+                            setSorting(this, index)
+                        }
+                    }
+                }
+                true
+            }
+
+
+            R.id.settings_menu -> {
+//                makeSettingsDialog()
+                true
+            }
+            R.id.exit -> {
+                val intent = Intent(Intent.ACTION_MAIN)
+                intent.addCategory(Intent.CATEGORY_HOME)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                startActivity(intent)
+                postEvent(
+                    ShutdownEvent()
+                )
+                finish()
+                true
+            }
+            else -> {
+                false
             }
         }
     }

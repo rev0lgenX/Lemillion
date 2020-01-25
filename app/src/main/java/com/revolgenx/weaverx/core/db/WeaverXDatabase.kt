@@ -8,7 +8,7 @@ import com.revolgenx.weaverx.core.db.converter.TorrentStatusConverter
 import com.revolgenx.weaverx.core.db.torrent.TorrentDao
 import com.revolgenx.weaverx.core.db.torrent.TorrentEntity
 
-@Database(entities = [TorrentEntity::class], version = 1)
+@Database(entities = [TorrentEntity::class], version = 2)
 @TypeConverters(DateConverter::class, TorrentStatusConverter::class)
 abstract class WeaverXDatabase : RoomDatabase() {
     abstract fun torrentDao(): TorrentDao

@@ -216,6 +216,28 @@ class TorrentFragment :
         super.onDestroy()
     }
 
+
+    override fun resumeAll() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun pauseAll() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun search(query: String) {
+        adapter.search(query)
+    }
+
+    override fun sort(comparator: Comparator<*>) {
+
+    }
+
+    fun onPageSelected() {
+        search("")
+        inActionMode = false
+    }
+
     inner class TorrentRecyclerAdapter :
         SelectableAdapter<TorrentRecyclerAdapter.TorrentViewHolder, Torrent>(object :
             DiffUtil.ItemCallback<Torrent>() {
@@ -238,6 +260,27 @@ class TorrentFragment :
         override fun onBindViewHolder(holder: TorrentViewHolder, position: Int) {
             holder.bind(getItem(position))
         }
+
+        override fun performFiltering(constraint: CharSequence?) {
+            if (constraint?.length == 0) {
+                if (searchTempList.isNotEmpty()) {
+                    submitList(mutableListOf<Torrent>().apply { addAll(searchTempList) })
+                    searchTempList.clear()
+                }
+            } else {
+                if (searchTempList.isEmpty()) {
+                    searchTempList.addAll(currentList)
+                }
+                submitList(emptyList())
+                constraint?.toString()?.toLowerCase()?.trim()?.let { pattern ->
+                    searchTempList.filter { it.name.toLowerCase().contains(pattern) }
+                        .takeIf { it.isNotEmpty() }?.let {
+                            submitList(it)
+                        }
+                }
+            }
+        }
+
 
         override fun onViewRecycled(holder: TorrentViewHolder) {
             holder.unbind()
@@ -301,8 +344,14 @@ class TorrentFragment :
 
                     torrentNameTv.text = torrent!!.name
                     torrentProgressBar.progress = torrent!!.progress
-                    torrentProgressBar.labelText = torrent!!.progress.toInt().toString()
-                    torrentFirstTv.text = torrent!!.status.name
+                    torrentProgressBar.labelText = torrent!!.progress.toString()
+
+                    if (torrent!!.completed && torrent!!.status != SEEDING) {
+                        torrentFirstTv.text = getString(R.string.completed)
+                    } else
+                        torrentFirstTv.text = torrent!!.status.name
+
+
                     pausePlayIv.setImageResource(
                         when (torrent!!.status) {
                             QUEUE, SEEDING, DOWNLOADING, CHECKING -> {
@@ -327,5 +376,6 @@ class TorrentFragment :
             }
         }
     }
+
 
 }

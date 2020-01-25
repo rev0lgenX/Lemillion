@@ -1,5 +1,6 @@
 package com.revolgenx.weaverx.app
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import com.arialyy.aria.core.Aria
 import com.revolgenx.weaverx.core.coreModules
@@ -13,6 +14,8 @@ class App : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
+
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
         Aria.init(this).apply {
             appConfig.isNetCheck = true
             appConfig.isNotNetRetry = false

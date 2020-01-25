@@ -14,7 +14,7 @@ import com.revolgenx.weaverx.R
 import com.revolgenx.weaverx.adapter.SelectableAdapter
 import kotlinx.android.synthetic.main.base_recycler_view_layout.*
 
-open class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Fragment() {
+abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Fragment() {
 
     protected lateinit var adapter: SelectableAdapter<VH, T>
     private val recyclerStateKey = "recycler_state_key"
@@ -58,5 +58,10 @@ open class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Fragmen
         )
         super.onSaveInstanceState(outState)
     }
+
+    abstract fun resumeAll()
+    abstract fun pauseAll()
+    abstract fun search(query:String)
+    abstract fun sort(comparator:Comparator<*>)
 
 }

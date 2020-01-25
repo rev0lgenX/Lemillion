@@ -9,25 +9,29 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.arialyy.annotations.Download
+import com.arialyy.aria.core.Aria
+import com.arialyy.aria.core.task.DownloadTask
+import com.arialyy.aria.util.CommonUtil
 import com.revolgenx.weaverx.R
 import com.revolgenx.weaverx.activity.MainActivity
+import com.revolgenx.weaverx.core.book.Book
 import com.revolgenx.weaverx.core.db.torrent.TorrentRepository
 import com.revolgenx.weaverx.core.torrent.Torrent
 import com.revolgenx.weaverx.core.torrent.TorrentEngine
 import com.revolgenx.weaverx.core.torrent.TorrentStatus
 import com.revolgenx.weaverx.core.util.registerClass
 import com.revolgenx.weaverx.core.util.unregisterClass
-import com.revolgenx.weaverx.event.TorrentEvent
-import com.revolgenx.weaverx.event.TorrentEventType
-import com.revolgenx.weaverx.event.TorrentRemovedEvent
+import com.revolgenx.weaverx.event.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import libtorrent.Libtorrent
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.koin.android.ext.android.inject
 import timber.log.Timber
+import java.io.File
 
 class MainService : Service() {
 
@@ -41,8 +45,9 @@ class MainService : Service() {
     private val torrentUpdateTime = 1000L
     private val saveTimeDelay = 5000L
     private val handler = Handler()
-    val torrentHashMap = mutableMapOf<String, Torrent>()
 
+    val torrentHashMap = mutableMapOf<String, Torrent>()
+    val bookHashMap = mutableMapOf<Long, Book>()
     private val torrentEngine by inject<TorrentEngine>()
     private val torrentRepository by inject<TorrentRepository>()
 
@@ -102,6 +107,8 @@ class MainService : Service() {
         super.onCreate()
         Timber.d("oncreate")
         notifyManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager?
+
+        Aria.download(this).register()
         makeNotifyChans(notifyManager)
     }
 
@@ -158,16 +165,117 @@ class MainService : Service() {
         checkIfServiceIsEmpty()
     }
 
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onBookEvent(event: BookEvent) {
+        when (event.bookEventType) {
+            BookEventType.BOOK_RESUMED -> {
+                bookHashMap[event.book.entity!!.id] = event.book
+                event.book.listener?.invoke()
+            }
+            BookEventType.BOOK_PAUSED -> {
+                bookHashMap.remove(event.book.entity!!.id)
+                event.book.listener?.invoke()
+                checkIfServiceIsEmpty()
+            }
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onBookRemoveEvent(event: BookRemovedEvent) {
+        event.ids.forEach { bookHashMap.remove(it) }
+        checkIfServiceIsEmpty()
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onShutdownEvent(event: BookRemovedEvent) {
+        Libtorrent.pause()
+        torrentHashMap.clear()
+        Aria.download(this).stopAllTask()
+        bookHashMap.clear()
+        stopService()
+    }
+
+    @Download.onWait
+    fun onWait(task: DownloadTask?) {
+        Timber.d("wait ==> " + task?.downloadEntity!!.fileName)
+        
+    }
+
+    @Download.onPre
+    fun onPre(task: DownloadTask?) {
+        Timber.d("onPre")
+        
+    }
+
+    @Download.onTaskStart
+    fun taskStart(task: DownloadTask?) {
+        Timber.d("onStart")
+        
+    }
+
+    @Download.onTaskRunning
+    fun running(task: DownloadTask?) {
+        Timber.d("running")
+        
+    }
+
+    @Download.onTaskResume
+    fun taskResume(task: DownloadTask?) {
+        Timber.d("resume")
+        
+    }
+
+    @Download.onTaskStop
+    fun taskStop(task: DownloadTask?) {
+        Timber.d("stop")
+        
+    }
+
+    @Download.onTaskCancel
+    fun taskCancel(task: DownloadTask?) {
+        Timber.d("cancel")
+        
+    }
+
+    @Download.onTaskFail
+    fun taskFail(task: DownloadTask?) {
+        if (task == null) return
+        Timber.d("fail")
+        
+        removeBook(task.entity.id)
+    }
+
+
+    @Download.onTaskComplete
+    fun taskComplete(task: DownloadTask?) {
+        if (task == null) return
+
+        Timber.d("path ==> " + task.downloadEntity.filePath)
+        Timber.d("md5Code ==> " + CommonUtil.getFileMD5(File(task.filePath)))
+        
+        removeBook(task.entity.id)
+    }
+
+
+    private fun removeBook(id: Long) {
+        bookHashMap.remove(id)
+        checkIfServiceIsEmpty()
+    }
+
+
+
     //TODO CHECK FOR FILES EMPTINESS
     private fun checkIfServiceIsEmpty() {
         val torrentIsEmpty = torrentHashMap.isEmpty()
+        val bookIsEmtpy = bookHashMap.isEmpty()
 
         if (torrentIsEmpty) {
             handler.removeCallbacksAndMessages(null)
             Timber.d("stopping service empty torrent")
         }
 
-        if (torrentIsEmpty) {
+        if (torrentIsEmpty && bookIsEmtpy) {
             stopService()
         }
     }

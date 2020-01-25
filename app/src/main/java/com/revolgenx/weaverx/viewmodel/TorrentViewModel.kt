@@ -7,8 +7,12 @@ import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.revolgenx.weaverx.R
 import com.revolgenx.weaverx.core.db.torrent.TorrentRepository
+import com.revolgenx.weaverx.core.preference.getSorting
 import com.revolgenx.weaverx.core.service.ServiceConnector
 import com.revolgenx.weaverx.core.service.isServiceRunning
+import com.revolgenx.weaverx.core.sorting.BaseSorting
+import com.revolgenx.weaverx.core.sorting.torrent.TorrentSorting
+import com.revolgenx.weaverx.core.sorting.torrent.TorrentSortingComparator
 import com.revolgenx.weaverx.core.torrent.Torrent
 import com.revolgenx.weaverx.core.torrent.TorrentEngine
 import com.revolgenx.weaverx.core.util.*
@@ -29,6 +33,19 @@ class TorrentViewModel(
     private val torrentHashMap = mutableMapOf<String, Torrent>()
 
     val torrentResource = MutableLiveData<Resource<List<Torrent>>>()
+    var sorting =
+        context.resources.getStringArray(R.array.sort_array)[getSorting(context)].split(" ").let {
+            TorrentSortingComparator(
+                TorrentSorting(
+                    TorrentSorting.SortingColumns.fromValue(it[0]),
+                    BaseSorting.Direction.fromValue(it[1])
+                )
+            )
+        }
+        set(value) {
+            field = value
+            updateResource()
+        }
 
     init {
         registerClass(this)
@@ -51,7 +68,7 @@ class TorrentViewModel(
                     //TODO SERVICES
                     if (resource.status == Status.SUCCESS) {
                         torrentHashMap[torrent.hash] = torrent
-                        torrentResource.postValue(Resource.success(torrentHashMap.values.toMutableList()))
+                        updateResource()
                     }
                 }
 
@@ -72,7 +89,7 @@ class TorrentViewModel(
 
                     if (resource.status == Status.SUCCESS) {
                         torrentHashMap[torrent.hash] = torrent
-                        torrentResource.postValue(Resource.success(torrentHashMap.values.toMutableList()))
+                        updateResource()
                     }
                 }
             }
@@ -95,7 +112,7 @@ class TorrentViewModel(
                     torrent.remove(event.withFiles)
                     torrentHashMap.remove(torrent.hash)
                 }
-                torrentResource.postValue(Resource.success(torrentHashMap.values.toMutableList()))
+                updateResource()
             } else {
                 launch(Dispatchers.Main) {
                     context.makeToast(context.getString(R.string.failed_to_remove_torrent))
@@ -145,7 +162,7 @@ class TorrentViewModel(
                             resource.data!!.forEach { torrent ->
                                 torrentHashMap[torrent.hash] = torrent
                             }
-                            torrentResource.postValue(Resource.success(torrentHashMap.values.toMutableList()))
+                            updateResource()
                         }
                         connector.disconnect()
                     }
@@ -164,23 +181,10 @@ class TorrentViewModel(
         }
     }
 
-    fun addTorrent(torrent: Torrent) = liveData {
-        emit(torrentRepository.add(torrent))
-    }
-
-    fun updateTorrent(torrent: Torrent) = liveData {
-        emit(Resource.loading(null))
-        emit(torrentRepository.update(torrent))
-    }
-
-    fun removeTorrent(torrent: Torrent) = liveData {
-        emit(Resource.loading(null))
-        emit(torrentRepository.remove(torrent))
-    }
-
-    fun removeAll(torrents: List<Torrent>) = liveData {
-        emit(Resource.loading(null))
-        emit(torrentRepository.removeAll(torrents))
+    private fun updateResource() {
+        torrentResource.postValue(
+            Resource.success(torrentHashMap.values.sortedWith(sorting).toMutableList())
+        )
     }
 
 

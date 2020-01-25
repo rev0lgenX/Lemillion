@@ -2,21 +2,32 @@ package com.revolgenx.weaverx.fragment.book
 
 import android.os.Bundle
 import android.util.TypedValue
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import androidx.appcompat.view.ActionMode
+import androidx.appcompat.widget.AppCompatDrawableManager
+import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.view.iterator
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.checkbox.checkBoxPrompt
 import com.arialyy.annotations.Download
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.inf.IEntity
 import com.arialyy.aria.core.task.DownloadTask
 import com.arialyy.aria.util.CommonUtil
 import com.revolgenx.weaverx.R
+import com.revolgenx.weaverx.activity.MainActivity
 import com.revolgenx.weaverx.adapter.SelectableAdapter
 import com.revolgenx.weaverx.core.book.Book
+import com.revolgenx.weaverx.core.sorting.book.BookSortingComparator
 import com.revolgenx.weaverx.core.util.Status
+import com.revolgenx.weaverx.core.util.makeToast
+import com.revolgenx.weaverx.core.util.postEvent
+import com.revolgenx.weaverx.event.BookEvent
+import com.revolgenx.weaverx.event.BookEventType
+import com.revolgenx.weaverx.event.BookRemovedEvent
 import com.revolgenx.weaverx.fragment.BaseRecyclerFragment
 import com.revolgenx.weaverx.viewmodel.BookViewModel
 import kotlinx.android.synthetic.main.base_recycler_view_layout.view.*
@@ -28,12 +39,95 @@ import java.io.File
 class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookViewHolder, Book>() {
 
     companion object {
-        fun newInstance() = BookFragment()
+        fun newInstance() = BookFragment().apply {
+            Aria.download(this).register()
+        }
     }
 
     private val viewModel by viewModel<BookViewModel>()
     private var iconColor: Int = 0
     private var iconColorInverse: Int = 0
+
+
+    private var actionMode: ActionMode? = null
+    private var inActionMode = false
+        set(value) {
+            field = value
+
+            actionMode = if (value) {
+                (activity as? MainActivity)?.startSupportActionMode(actionModeCallback)
+            } else {
+                actionMode?.finish()
+                null
+            }
+        }
+
+    private val actionModeCallback = object : ActionMode.Callback {
+        override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
+            return when (item?.itemId) {
+                R.id.bookDelete -> {
+                    MaterialDialog(this@BookFragment.context!!).show {
+                        var withFiles = false
+                        checkBoxPrompt(R.string.delete_with_files) {
+                            withFiles = it
+                        }
+                        message(R.string.are_you_sure)
+                        title(R.string.delete_files)
+                        positiveButton(R.string.yes) {
+                            postEvent(
+                                BookRemovedEvent(
+                                    (adapter as BookRecyclerAdapter).getSelectedIds(),
+                                    withFiles
+                                )
+                            )
+                            inActionMode = false
+                        }
+                        negativeButton(R.string.no)
+                    }
+                    true
+                }
+
+
+                R.id.bookSelectAllItem -> {
+                    adapter.selectAll()
+                    true
+                }
+                android.R.id.home -> {
+                    false
+                }
+                else -> false
+            }
+        }
+
+        override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+            mode?.menuInflater?.inflate(R.menu.book_action_menu, menu)
+            menu?.iterator()?.forEach {
+                when (it.itemId) {
+                    R.id.bookDelete -> {
+                        it.icon = AppCompatDrawableManager.get()
+                            .getDrawable(context!!, R.drawable.ic_delete)
+                            .apply { DrawableCompat.setTint(this, iconColor) }
+                    }
+
+                    R.id.bookSelectAllItem -> {
+                        it.icon = AppCompatDrawableManager.get()
+                            .getDrawable(context!!, R.drawable.ic_select_all)
+                            .apply { DrawableCompat.setTint(this, iconColor) }
+                    }
+                }
+            }
+            return true
+        }
+
+        override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
+
+        override fun onDestroyActionMode(mode: ActionMode?) {
+            inActionMode = false
+            adapter.clearSelection()
+        }
+
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -129,6 +223,28 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
         invokeListener(task)
     }
 
+    override fun resumeAll() {
+
+    }
+
+    override fun pauseAll() {
+
+    }
+
+
+    override fun search(query: String) {
+        adapter.search(query)
+    }
+
+    override fun sort(comparator: Comparator<*>) {
+        viewModel.sorting = comparator as BookSortingComparator
+    }
+
+    fun onPageSelected() {
+        search("")
+        inActionMode = false
+    }
+
     inner class BookRecyclerAdapter :
         SelectableAdapter<BookRecyclerAdapter.BookViewHolder, Book>(object :
             DiffUtil.ItemCallback<Book>() {
@@ -155,13 +271,78 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
             super.onViewRecycled(holder)
         }
 
+        fun getSelectedIds(): List<Long> {
+            return getSelectedItems().map { currentList[it].entity!!.id }
+        }
+
+        override fun performFiltering(constraint: CharSequence?) {
+            if (constraint?.length == 0) {
+                if (searchTempList.isNotEmpty()) {
+                    submitList(mutableListOf<Book>().apply { addAll(searchTempList) })
+                    searchTempList.clear()
+                }
+            } else {
+                if (searchTempList.isEmpty()) {
+                    searchTempList.addAll(currentList)
+                }
+                submitList(emptyList())
+                constraint?.toString()?.toLowerCase()?.trim()?.let { pattern ->
+                    searchTempList.filter { it.name.toLowerCase().contains(pattern) }
+                        .takeIf { it.isNotEmpty() }?.let {
+                            submitList(it)
+                        }
+                }
+            }
+        }
+
+        fun clearListener() {
+            adapter.currentList.forEach { it.listener = null }
+        }
+
         inner class BookViewHolder(private val v: View) : RecyclerView.ViewHolder(v) {
             private var book: Book? = null
+
+            init {
+                addListener()
+            }
+
+            private fun addListener() {
+                v.apply {
+                    pausePlayIv.setOnClickListener {
+                        if (book == null) return@setOnClickListener
+
+                        if (book!!.entity!!.isComplete) {
+                            makeToast(getString(R.string.task_completed))
+                            return@setOnClickListener
+                        }
+
+                        if (book!!.entity!!.state == IEntity.STATE_PRE || book!!.entity!!.state == IEntity.STATE_POST_PRE) {
+                            makeToast(getString(R.string.please_wait_collecting_data))
+                            return@setOnClickListener
+                        }
+
+                        when (book!!.entity!!.state) {
+                            IEntity.STATE_WAIT, IEntity.STATE_RUNNING -> {
+                                Aria.download(this).load(book!!.entity!!.id).stop()
+                                postEvent(BookEvent(book!!, BookEventType.BOOK_PAUSED))
+                            }
+                            else -> {
+                                Aria.download(this).load(book!!.entity!!.id).resume()
+                                postEvent(BookEvent(book!!, BookEventType.BOOK_RESUMED))
+                            }
+                        }
+                    }
+                }
+            }
+
             fun bind(book: Book) {
                 this.book = book
+
                 book.listener = {
+                    Timber.d("listener invoked")
                     updateView()
                 }
+
                 updateView()
             }
 
@@ -170,10 +351,12 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                 book = null
             }
 
+
             private fun updateView() {
                 v.apply {
                     if (book == null) return
 
+                    bookConstraintLayout.isSelected = isSelected(adapterPosition)
                     pageNameTv.text = book!!.entity!!.fileName
                     pageSpeedTv.text = book!!.entity!!.convertSpeed
                     pageProgressBar.progress = book!!.entity!!.percent.toFloat()
@@ -188,6 +371,21 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                             }
                         }
                     )
+
+                    setOnClickListener {
+                        if (selectedItemCount > 0) {
+                            toggleSelection(adapterPosition)
+                            return@setOnClickListener
+                        }
+                    }
+
+                    setOnLongClickListener {
+                        toggleSelection(adapterPosition)
+                        if (!inActionMode) {
+                            inActionMode = true
+                        }
+                        true
+                    }
 
                     pageStatusTv.text = when (book!!.entity!!.state) {
                         IEntity.STATE_RUNNING -> {
@@ -223,6 +421,11 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        (adapter as BookRecyclerAdapter).clearListener()
+        super.onDestroy()
     }
 
 }

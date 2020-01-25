@@ -47,7 +47,7 @@ class PiecesView(context: Context, attributeSet: AttributeSet?, defAttr: Int) :
 
 //        if (isInEditMode) {
 //            for (i in 0 until cells * cells - 10) {
-//                val s = ALL[(Math.random() * ALL.size).toInt()]
+//                val s = ALL[(Math.random() * ALL.totalSize).toInt()]
 //                pieces.add(s)
 //            }
 //        }

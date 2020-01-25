@@ -8,6 +8,6 @@ val viewModelModule = module {
         TorrentViewModel(get(),get(),get(),get())
     }
     viewModel {
-        BookViewModel()
+        BookViewModel(get(),get())
     }
 }

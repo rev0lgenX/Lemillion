@@ -64,4 +64,25 @@
     <string name="unresolved_issues">Please resolve the issue first.</string>
     <string name="enter_file_name">Enter file name</string>
     <string name="task_with_same_url_exists">Task with same url exists.</string>
+    <string name="http_not_found">HTTP NOT FOUND</string>
+    <string name="please_wait_collecting_data">Please wait collecting data</string>
+    <string name="task_completed">Task Completed</string>
+    <string name="search">Search</string>
+    <string name="resume_all">Resume all</string>
+    <string name="pause_all">Pause all</string>
+    <string name="settings">Setting</string>
+    <string name="sort">Sort</string>
+    <string name="exit">Exit</string>
+
+
+    <string-array name="sort_array">
+        <item>Name Asc</item>
+        <item>Name Desc</item>
+        <item>Size Asc</item>
+        <item>Size Desc</item>
+        <item>Progress Asc</item>
+        <item>Progress Desc</item>
+        <item>Date Asc</item>
+        <item>Date Desc</item>
+    </string-array>
 </resources>

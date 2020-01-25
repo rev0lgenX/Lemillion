@@ -113,14 +113,11 @@ dependencies {
 
     //axet libraries
     implementation 'com.github.axet:libtorrent:0.13.38'
-    implementation('com.github.axet:wget:1.7.0') {
-        exclude group: 'org.json', module: 'json'
-    }
     implementation 'com.github.axet:android-library:1.32.3'
 
     //aria
-    implementation 'com.arialyy.aria:core:3.8.3'
-    kapt 'com.arialyy.aria:compiler:3.8.3'
+    implementation 'com.arialyy.aria:core:3.8.5'
+    kapt 'com.arialyy.aria:compiler:3.8.5'
 
     //permission
     implementation 'com.karumi:dexter:5.0.0'

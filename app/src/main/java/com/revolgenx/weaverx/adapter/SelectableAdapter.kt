@@ -1,6 +1,7 @@
 package com.revolgenx.weaverx.adapter
 
 import android.util.SparseBooleanArray
+import android.widget.Filter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 
@@ -12,6 +13,9 @@ abstract class SelectableAdapter<VH : RecyclerView.ViewHolder, T : Any>(diffUtil
         get() = selectedItems.size()
 
     private val selectedItems: SparseBooleanArray by lazy { SparseBooleanArray() }
+    private val filter = SearchFilter()
+    protected val searchTempList = mutableListOf<T>()
+
 
     fun isSelected(position: Int): Boolean {
         return getSelectedItems().contains(position)
@@ -54,5 +58,21 @@ abstract class SelectableAdapter<VH : RecyclerView.ViewHolder, T : Any>(diffUtil
             selectedItems.put(i, true)
         }
         notifyDataSetChanged()
+    }
+
+    inner class SearchFilter : Filter() {
+        override fun performFiltering(constraint: CharSequence?): FilterResults {
+            this@SelectableAdapter.performFiltering(constraint)
+            return FilterResults()
+        }
+
+        override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+            notifyDataSetChanged()
+        }
+    }
+
+    abstract fun performFiltering(constraint: CharSequence?)
+    fun search(query: String) {
+        filter.filter(query)
     }
 }
