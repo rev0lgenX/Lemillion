@@ -56,7 +56,7 @@
             android:layout_marginRight="10dp"
             android:orientation="vertical">
 
-            <com.revolgenx.weaverx.view.TitleTextView
+            <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/bookNameTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -65,7 +65,7 @@
                 app:showDrawable="true"
                 app:titleName="Name" />
 
-            <com.revolgenx.weaverx.view.TitleTextView
+            <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/bookPathTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -74,7 +74,7 @@
                 app:showDrawable="true"
                 app:titleName="Name" />
 
-            <com.revolgenx.weaverx.view.TitleTextView
+            <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/bookUrlTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

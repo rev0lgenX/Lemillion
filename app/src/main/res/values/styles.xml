@@ -15,6 +15,10 @@
         <item name="android:textColorPrimaryInverse">@color/textColorPrimaryInverse</item>
         <item name="android:textColorSecondaryInverse">@color/textColorSecondaryInverse</item>
 
+        <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+        <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+
+
         <item name="android:actionModeBackground">@color/colorPrimary</item>
         <item name="actionModeBackground">@color/colorPrimary</item>
         <item name="windowActionModeOverlay">true</item>
@@ -23,6 +27,8 @@
         <!--background-->
         <item name="selectedBackground">@drawable/background_selector</item>
 
+        <!--File chooser style-->
+        <item name="fileChooserPathViewStyle">@style/FileChooserPathViewStyle</item>
 
         <!--dialog md-->
         <item name="md_color_button_text">@color/materialButtonColor</item>
@@ -45,6 +51,8 @@
         <item name="fileBackgroundDark">@color/colorPrimaryDark</item>
 
         <item name="pausePlayColor">@color/circleColor</item>
+
+
     </style>
 
     <style name="BaseTheme.Dark" parent="BaseTheme">
@@ -54,6 +62,9 @@
         <item name="android:textColorPrimary">@color/textColorPrimaryInverse</item>
         <item name="android:textColorSecondary">@color/textColorPrimaryInverse</item>
 
+
+        <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
+        <item name="popupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
 
         <item name="android:actionModeBackground">@color/colorPrimaryInverse</item>
         <item name="actionModeBackground">@color/colorPrimaryInverse</item>
@@ -86,7 +97,6 @@
 
         <!--file color-->
         <item name="fileBackgroundDark">@color/colorPrimaryInverse</item>
-
         <item name="pausePlayColor">@color/circleColorDark</item>
 
     </style>
@@ -102,10 +112,94 @@
     </style>
 
     <style name="CustomToolbarTextAppearance" parent="Widget.AppCompat.Toolbar">
-        <item name="android:fontFamily">@font/open_sans_semi_bold</item>
+        <item name="android:fontFamily">@font/open_sans_regular</item>
         <item name="android:textColor">?android:textColorPrimary</item>
         <item name="android:textSize">20sp</item>
         <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="CustomFileChooserStyle" parent="FileChooserStyle">
+
+        <item name="android:textColor">@color/textColorPrimary</item>
+        <item name="android:textColorPrimary">@color/textColorPrimary</item>
+        <item name="android:textColorSecondary">@color/textColorPrimary</item>
+        <item name="colorPrimary">@color/textColorPrimary</item>
+        <item name="android:fontFamily">@font/open_sans_regular</item>
+        <item name="colorPrimaryDark">@color/textColorPrimary</item>
+        <item name="fileChooserDialogStyle">@style/CustomFileChooserDialogStyle</item>
+        <item name="fileChooserListItemStyle">@style/CustomFileChooserListItemStyle</item>
+        <item name="colorAccent">@color/black</item>
+    </style>
+
+    <style name="CustomFileChooserDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert"/>
+
+
+    <style name="CustomFileChooserListItemStyle" parent="FileChooserListItemStyle">
+        <item name="fileChooserTextNameStyle">@style/CustomFileChooserTextNameStyle</item>
+        <item name="fileChooserTextSizeStyle">@style/CustomFileChooserTextSizeDateStyle</item>
+        <item name="fileChooserTextDateStyle">@style/CustomFileChooserTextSizeDateStyle</item>
+    </style>
+
+    <style name="CustomFileChooserTextNameStyle" parent="FileChooserTextNameStyle">
+        <item name="android:textColor">@color/textColorPrimary</item>
+    </style>
+
+    <style name="CustomFileChooserTextSizeDateStyle" parent="FileChooserTextSizeStyle">
+        <item name="android:textColor">@color/textColorPrimary</item>
+    </style>
+
+
+    <style name="FileChooserStyle_Dark" parent="FileChooserStyle">
+        <item name="android:textColor">@color/textColorPrimaryInverse</item>
+        <item name="android:textColorPrimary">@color/textColorPrimaryInverse</item>
+        <item name="android:textColorSecondary">@color/textColorPrimaryInverse</item>
+        <item name="colorPrimary">@color/textColorPrimaryInverse</item>
+        <item name="fileChooserDialogStyle">@style/FileChooserDialogStyle_Dark</item>
+        <item name="fileChooserListItemStyle">@style/FileChooserListItemStyle_Dark</item>
+        <item name="fileChooserPathViewStyle">@style/FileChooserPathViewStyle_Dark</item>
+        <item name="fileChooserNewFolderStyle">@style/FileChooserNewFolderStyle_Dark</item>
+        <item name="android:fontFamily">@font/open_sans_regular</item>
+    </style>
+
+    <style name="FileChooserDialogStyle_Dark" parent="Theme.AppCompat.Dialog.Alert"/>
+
+    <style name="FileChooserTitleStyle_Dark" parent="FileChooserTitleStyle">
+        <item name="android:textColor">?android:textColorPrimary</item>
+    </style>
+
+    <style name="FileChooserButtonStyle_Dark" parent="FileChooserButtonStyle">
+        <item name="android:textColor">?android:textColorSecondary</item>
+    </style>
+
+    <style name="FileChooserListItemStyle_Dark" parent="FileChooserListItemStyle">
+        <item name="fileChooserTextNameStyle">@style/FileChooserTextNameStyle_Dark</item>
+        <item name="fileChooserTextSizeStyle">@style/FileChooserTextSizeDateStyle_Dark</item>
+        <item name="fileChooserTextDateStyle">@style/FileChooserTextSizeDateStyle_Dark</item>
+        <item name="android:background">@color/backgroundDark</item>
+        <item name="fileListItemSelectedTint">@color/colorPrimaryInverse</item>
+        <item name="fileListItemFocusedDrawable">@drawable/listview_item_selector_dark</item>
+    </style>
+
+    <style name="FileChooserTextNameStyle_Dark" parent="FileChooserTextNameStyle">
+        <item name="android:textColor">@color/text_light</item>
+    </style>
+
+    <style name="FileChooserTextSizeDateStyle_Dark" parent="FileChooserTextSizeStyle">
+        <item name="android:textColor">@color/text_light</item>
+    </style>
+
+    <style name="FileChooserPathViewStyle_Dark" parent="FileChooserPathViewStyle">
+        <item name="android:background">@color/backgroundDark</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
+    </style>
+
+    <style name="FileChooserNewFolderStyle_Dark">
+        <item name="fileChooserNewFolderOverlayColor">@color/overlay_dark</item>
+        <item name="fileChooserNewFolderBackgroundColor">@color/background_dark</item>
+        <item name="fileChooserNewFolderWidthWeight">0.8</item>
+        <item name="fileChooserNewFolderElevation">50</item>
+        <item name="fileChooserNewFolderTextColor">?android:textColorSecondary</item>
+        <item name="fileChooserNewFolderSoftInputMode">adjustResize</item>
     </style>
 
 </resources>

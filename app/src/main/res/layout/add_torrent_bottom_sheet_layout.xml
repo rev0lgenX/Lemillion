@@ -44,7 +44,7 @@
             android:orientation="vertical">
 
 
-            <com.revolgenx.weaverx.view.TitleTextView
+            <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/torrentMetaNameTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -53,7 +53,7 @@
                 app:showDrawable="true"
                 app:titleName="@string/name" />
 
-            <com.revolgenx.weaverx.view.TitleTextView
+            <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/torrentMetaHashTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
                 app:showDrawable="true"
                 app:titleName="@string/hash" />
 
-            <com.revolgenx.weaverx.view.TitleTextView
+            <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/torrentPathMetaTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -72,21 +72,21 @@
                 app:titleName="@string/path" />
 
 
-            <com.revolgenx.weaverx.view.TitleTextView
+            <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/torrentSizeTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 app:titleName="@string/size" />
 
-            <com.revolgenx.weaverx.view.TitleTextView
+            <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/torrentPiecesTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 app:titleName="@string/pieces"/>
 
-            <com.revolgenx.weaverx.view.PiecesView
+            <com.revolgenx.lemillion.view.PiecesView
                 android:id="@+id/piecesView"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"

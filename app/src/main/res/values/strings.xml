@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WeaverX</string>
+    <string name="app_name">Lemillion</string>
     <string name="foreground_notification">App is running in background</string>
     <string name="torrent">Torrent</string>
     <string name="file">File</string>
@@ -73,6 +73,13 @@
     <string name="settings">Setting</string>
     <string name="sort">Sort</string>
     <string name="exit">Exit</string>
+    <string name="please_wait">Please wait</string>
+    <string name="dark_theme">Dark</string>
+    <string name="storage_path">Default storage path</string>
+    <string name="choose_a_folder">Choose a folder</string>
+    <string name="choose_a_file">Choose a file</string>
+    <string name="invalid_url">Invalid url</string>
+    <string name="general">General</string>
 
 
     <string-array name="sort_array">

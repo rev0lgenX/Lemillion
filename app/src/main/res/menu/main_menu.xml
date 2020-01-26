@@ -6,7 +6,8 @@
     <item
         android:id="@+id/search_menu"
         android:title="@string/search"
-        app:showAsAction="ifRoom"
+        app:showAsAction="ifRoom|collapseActionView"
+        android:icon="@drawable/ic_search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         />
 
@@ -26,7 +27,8 @@
     <item
         android:id="@+id/sort_menu"
         android:title="@string/sort"
-        app:showAsAction="never"/>
+        app:showAsAction="never"
+        android:icon="@drawable/ic_sort"/>
 
     <item
         android:id="@+id/settings_menu"

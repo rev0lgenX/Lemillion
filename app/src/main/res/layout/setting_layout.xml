@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp">
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/darkThemeSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="?actionBarSize"
+        android:enabled="true"
+        android:text="@string/dark_theme"
+        android:textSize="16sp"
+        android:textColor="?android:textColorPrimary"
+        android:fontFamily="@font/open_sans_regular"
+        />
+
+    <com.revolgenx.lemillion.view.TitleTextView
+        android:id="@+id/storageSettingTv"
+        android:layout_width="match_parent"
+        android:layout_height="?actionBarSize"
+        app:titleName="@string/storage_path"
+        app:descriptionDrawable="@drawable/ic_edit"
+        app:showDrawable="true"/>
+
+</LinearLayout>
