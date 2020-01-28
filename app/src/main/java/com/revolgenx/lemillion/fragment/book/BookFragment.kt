@@ -330,11 +330,11 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
 
                         when (book!!.entity!!.state) {
                             IEntity.STATE_WAIT, IEntity.STATE_RUNNING -> {
-                                Aria.download(this).load(book!!.entity!!.id).stop()
+                                book!!.stop()
                                 postEvent(BookEvent(listOf(book!!), BookEventType.BOOK_PAUSED))
                             }
                             else -> {
-                                Aria.download(this).load(book!!.entity!!.id).resume()
+                                book!!.resume()
                                 postEvent(BookEvent(listOf(book!!), BookEventType.BOOK_RESUMED))
                             }
                         }

@@ -17,10 +17,10 @@ import com.arialyy.aria.util.CheckUtil
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.activity.MainActivity
+import com.revolgenx.lemillion.core.book.Book
+import com.revolgenx.lemillion.core.book.BookProtocol
 import com.revolgenx.lemillion.core.preference.storagePath
-import com.revolgenx.lemillion.core.util.makeToast
-import com.revolgenx.lemillion.core.util.postEvent
-import com.revolgenx.lemillion.core.util.showProgress
+import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.event.BookAddedEvent
 import kotlinx.android.synthetic.main.add_book_bottom_sheet_dialog_layout.*
 import timber.log.Timber
@@ -52,7 +52,6 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
     companion object {
         fun newInstance(url: String) = AddBookBottomSheetDialog().apply {
-            Timber.d("url $url")
             arguments = bundleOf(urlKey to url)
         }
     }
@@ -183,21 +182,35 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
                 return@setOnClickListener
             }
 
-            postEvent(BookAddedEvent(taskId))
-            dialog?.dismiss()
+            val protocol = when {
+                url.startsWith(HTTP_PREFIX) || url.startsWith(HTTPS_PREFIX) -> BookProtocol.HTTP
+                url.startsWith(FTP_PREFIX) -> BookProtocol.FTP
+                else -> {
+                    context?.showErrorDialog("unsupported url")
+                    return@setOnClickListener
+                }
+            }
 
+            postEvent(BookAddedEvent(Book().also { book ->
+                book.id = taskId
+                book.entity = Aria.download(this).load(taskId).entity
+                book.bookProtocol = protocol
+            }))
+
+            dialog?.dismiss()
         }
     }
 
 
     @Download.onTaskRunning
     fun onTaskRunning(task: DownloadTask) {
+        Aria.download(this).load(task.entity.id).stop()
         showStatusProgress(visibility = false)
         onPreComplete = true
-        updateView()
-        Timber.d("ontask sampleStart")
         failCause = TaskFailedCause.NONE
-        Aria.download(this).load(task.entity.id).stop()
+        name = task.downloadEntity.serverFileName ?: name
+        Aria.download(this).load(taskId).modifyFilePath(fullPath).save()
+        updateView()
     }
 
     @Download.onTaskFail
@@ -266,9 +279,19 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
         failCause = TaskFailedCause.FINDING
         updateView()
-        taskId = Aria.download(this).load(url).setFilePath(fullPath).setHighestPriority()
-        if (taskId != -1L) {
-            Aria.download(this).load(taskId).resume()
+
+        if (url.startsWith(HTTP_PREFIX) || url.startsWith(HTTPS_PREFIX)) {
+            taskId = Aria.download(this).load(url).setFilePath(fullPath).setHighestPriority()
+            if (taskId != -1L) {
+                Aria.download(this).load(taskId).resume()
+            }
+        } else if (url.startsWith(FTP_PREFIX)) {
+            taskId = Aria.download(this).loadFtp(url).setFilePath(fullPath).setHighestPriority()
+            if (taskId != -1L) {
+                Aria.download(this).load(taskId).resume()
+            }
+        } else {
+            context!!.showErrorDialog(getString(R.string.unsupported_url))
         }
     }
 
@@ -289,25 +312,22 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
     override fun onCancel(dialog: DialogInterface) {
         removeTask()
-        Timber.d("oncancel")
         super.onCancel(dialog)
     }
 
     private fun removeTask() {
         if (taskId != -1L) {
-            Aria.download(this).load(taskId).cancel()
+            val downloadTask = Aria.download(this).load(taskId)
+            if (downloadTask.taskState == 5 || downloadTask.taskState == 6) {
+                makeToast(getString(R.string.please_wait_collecting_data))
+            } else {
+                downloadTask.cancel(true)
+            }
         }
     }
 
-    override fun onDismiss(dialog: DialogInterface) {
-        Timber.d("dismiss task addbookdialog")
-        super.onDismiss(dialog)
-    }
-
-
     override fun onDestroy() {
         Aria.download(this).unRegister()
-        Timber.d("ondestroy addbook")
         super.onDestroy()
     }
 

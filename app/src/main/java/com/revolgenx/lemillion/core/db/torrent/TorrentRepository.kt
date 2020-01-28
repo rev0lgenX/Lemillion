@@ -7,34 +7,31 @@ import timber.log.Timber
 import java.lang.Exception
 
 class TorrentRepository(private val torrentDao: TorrentDao) : BaseRepository<Torrent> {
-    override suspend fun add(obj: Torrent): Resource<Boolean> {
+    override suspend fun add(obj: Torrent): Resource<Long> {
         return try {
-            torrentDao.insert(obj.toEntity())
-            Resource.success(true)
+
+            Resource.success(torrentDao.insert(obj.toEntity()))
         } catch (e: Exception) {
             Timber.e(e)
-            Resource.success(false)
+            Resource.error(e.message ?: "error", -1)
         }
     }
 
-    override suspend fun remove(obj: Torrent): Resource<Boolean> {
+    override suspend fun remove(obj: Torrent): Resource<Int> {
         return try {
-            torrentDao.delete(obj.toEntity())
-            Resource.success(true)
-
+            Resource.success(torrentDao.delete(obj.toEntity()))
         } catch (e: Exception) {
             Timber.e(e)
-            Resource.success(false)
+            Resource.error(e.message ?: "error", -1)
         }
     }
 
-    override suspend fun update(obj: Torrent): Resource<Boolean> {
+    override suspend fun update(obj: Torrent): Resource<Int> {
         return try {
-            torrentDao.update(obj.toEntity())
-            Resource.success(true)
+            Resource.success(torrentDao.update(obj.toEntity()))
         } catch (e: Exception) {
             Timber.e(e)
-            Resource.error(e.message!!, null)
+            Resource.error(e.message ?: "error", -1)
         }
     }
 
@@ -57,33 +54,30 @@ class TorrentRepository(private val torrentDao: TorrentDao) : BaseRepository<Tor
         }
     }
 
-    override suspend fun removeAll(obj: List<Torrent>): Resource<Boolean> {
+    override suspend fun removeAll(obj: List<Torrent>): Resource<Int> {
         return try {
             Resource.success(torrentDao.deleteAll(obj.map { it.toEntity() }))
-            Resource.success(true)
         } catch (e: Exception) {
             Timber.e(e)
-            Resource.error(e.message!!, null)
+            Resource.error(e.message!!, -1)
         }
     }
 
-    override suspend fun removeAllWithIds(obj: List<Torrent>): Resource<Boolean> {
+    override suspend fun removeAllWithIds(obj: List<Torrent>): Resource<Int> {
         return try {
             Resource.success(torrentDao.deleteAllWithIds(obj.map { it.hash }))
-            Resource.success(true)
         } catch (e: Exception) {
             Timber.e(e)
-            Resource.error(e.message!!, null)
+            Resource.error(e.message!!, -1)
         }
     }
 
-    override suspend fun updateAll(obj: List<Torrent>): Resource<Boolean> {
+    override suspend fun updateAll(obj: List<Torrent>): Resource<Int> {
         return try {
             Resource.success(torrentDao.updateAll(obj.map { it.toEntity() }))
-            Resource.success(true)
         } catch (e: Exception) {
             Timber.e(e)
-            Resource.error(e.message!!, null)
+            Resource.error(e.message!!, -1)
         }
     }
 

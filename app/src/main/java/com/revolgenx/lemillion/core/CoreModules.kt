@@ -1,7 +1,8 @@
 package com.revolgenx.lemillion.core
 
 import androidx.room.Room
-import com.revolgenx.lemillion.core.db.WeaverXDatabase
+import com.revolgenx.lemillion.core.db.LemillionDatabase
+import com.revolgenx.lemillion.core.db.book.BookRepository
 import com.revolgenx.lemillion.core.db.torrent.TorrentRepository
 import com.revolgenx.lemillion.core.service.ServiceConnector
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
@@ -17,17 +18,25 @@ val coreModules = module {
 
     //database
     single {
-        Room.databaseBuilder(get(), WeaverXDatabase::class.java, "weaverx_torrent.db")
+        Room.databaseBuilder(get(), LemillionDatabase::class.java, "weaverx_torrent.db")
             .fallbackToDestructiveMigration()
             .build()
     }
 
     single {
-        get<WeaverXDatabase>().torrentDao()
+        get<LemillionDatabase>().torrentDao()
+    }
+
+    single {
+        get<LemillionDatabase>().bookDao()
     }
 
     single {
         TorrentRepository(get())
+    }
+
+    single {
+        BookRepository(get())
     }
 
 }

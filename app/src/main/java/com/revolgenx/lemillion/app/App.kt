@@ -3,6 +3,7 @@ package com.revolgenx.lemillion.app
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import com.arialyy.aria.core.Aria
+import com.arialyy.aria.core.common.HttpOption
 import com.revolgenx.lemillion.core.coreModules
 import com.revolgenx.lemillion.viewmodel.viewModelModule
 import org.koin.android.ext.koin.androidContext

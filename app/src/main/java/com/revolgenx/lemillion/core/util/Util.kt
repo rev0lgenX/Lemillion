@@ -17,6 +17,7 @@ import org.greenrobot.eventbus.EventBus
 val MAGNET_PREFIX = "magnet"
 val HTTP_PREFIX = "http"
 val HTTPS_PREFIX = "https"
+val FTP_PREFIX = "ftp"
 val FILE_PREFIX = "file"
 val CONTENT_PREFIX = "content"
 

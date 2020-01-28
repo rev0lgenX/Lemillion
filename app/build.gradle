@@ -116,6 +116,8 @@ dependencies {
 
     //aria
     implementation 'com.arialyy.aria:core:3.8.5'
+    implementation 'com.arialyy.aria:ftpComponent:3.8.5'
+    implementation 'com.arialyy.aria:sftpComponent:3.8.5'
     kapt 'com.arialyy.aria:compiler:3.8.5'
 
     //permission

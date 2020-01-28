@@ -1,3 +1,5 @@
 package com.revolgenx.lemillion.event
 
-data class BookAddedEvent(var id:Long)
+import com.revolgenx.lemillion.core.book.Book
+
+data class BookAddedEvent(var book: Book)
