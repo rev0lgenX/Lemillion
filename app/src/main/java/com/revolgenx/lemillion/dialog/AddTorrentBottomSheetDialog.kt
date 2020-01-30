@@ -26,7 +26,7 @@ import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.event.TorrentAddedEvent
 import com.revolgenx.lemillion.event.TorrentAddedEventTypes
 import kotlinx.android.synthetic.main.add_torrent_bottom_sheet_layout.*
-import kotlinx.android.synthetic.main.torrent_add_header_layout.view.*
+import kotlinx.android.synthetic.main.torrent_file_header_layout.view.*
 import libtorrent.Libtorrent
 
 
@@ -67,7 +67,7 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View? {
         headerLayout = LayoutInflater.from(context).inflate(
-            R.layout.torrent_add_header_layout,
+            R.layout.torrent_file_header_layout,
             container,
             false
         )

@@ -25,6 +25,7 @@ import com.revolgenx.lemillion.core.sorting.book.BookSortingComparator
 import com.revolgenx.lemillion.core.util.Status
 import com.revolgenx.lemillion.core.util.makeToast
 import com.revolgenx.lemillion.core.util.postEvent
+import com.revolgenx.lemillion.dialog.BookMetaBottomSheetDialog
 import com.revolgenx.lemillion.event.BookEvent
 import com.revolgenx.lemillion.event.BookEventType
 import com.revolgenx.lemillion.event.BookRemovedEvent
@@ -385,8 +386,13 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                             return@setOnClickListener
                         }
                         if (selectedItemCount <= 0) {
-                            if (inActionMode) inActionMode = false
+                            if (inActionMode) {
+                                inActionMode = false
+                                return@setOnClickListener
+                            }
                         }
+
+                        BookMetaBottomSheetDialog.newInstance()
                     }
 
                     setOnLongClickListener {

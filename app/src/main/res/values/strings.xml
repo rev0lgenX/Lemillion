@@ -81,6 +81,10 @@
     <string name="invalid_url">Invalid url</string>
     <string name="general">General</string>
     <string name="unsupported_url">Unsupported url</string>
+    <string name="speed">Speed</string>
+    <string name="seeders_leechers">Seeders(S) / Leechers(L)</string>
+    <string name="peers">Peers</string>
+    <string name="url">Url</string>
 
 
     <string-array name="sort_array">

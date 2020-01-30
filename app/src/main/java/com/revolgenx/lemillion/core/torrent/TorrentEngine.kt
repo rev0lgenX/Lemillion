@@ -33,7 +33,7 @@ class TorrentEngine {
                 val max = Runtime.getRuntime().maxMemory() / 1024 / 1024
                 val sock: Int
                 sock = when {
-                    max >= 192 -> 40
+                    max >= 192 -> 20
                     max >= 96 -> 10
                     max >= 64 -> 5
                     else -> 2

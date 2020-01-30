@@ -11,9 +11,6 @@ import java.util.UUID.randomUUID
 import org.apache.commons.io.FileUtils.copyInputStreamToFile
 
 
-
-
-
 val GB: Long = 1073741824 // 1024 * 1024 * 1024
 val MB: Long = 1048576 // 1024 * 1024
 val KB: Long = 1024
@@ -31,19 +28,24 @@ fun getDefualtStoragePath(): String {
 }
 
 fun Long.formatSize(): String {
-    if (this >= GB) {
-        return String.format("%.2f GB", this * 1.0 / GB);
-    } else if (this >= MB) {
-        return String.format("%.2f MB", this * 1.0 / MB);
-    } else {
-        return String.format("%.2f KB", this * 1.0 / KB);
+    return when {
+        this >= GB -> {
+            String.format("%.2f gb", this * 1.0 / GB)
+        }
+        this >= MB -> {
+            String.format("%.2f mb", this * 1.0 / MB)
+        }
+        else -> {
+            String.format("%.2f kb", this * 1.0 / KB)
+        }
     }
 }
+
+fun Long.formatSpeed(): String = this.formatSize() + "/s"
 
 fun makeTempFile(context: Context, postfix: String): File {
     return File(getTempDir(context), UUID.randomUUID().toString() + postfix)
 }
-
 
 private fun getTempDir(context: Context): File? {
     val tmpDir = File(context.getExternalFilesDir(null), "temp")

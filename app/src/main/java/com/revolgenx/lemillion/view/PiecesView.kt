@@ -38,11 +38,11 @@ class PiecesView(context: Context, attributeSet: AttributeSet?, defAttr: Int) :
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attributeSet: AttributeSet?) : this(context, attributeSet, 0) {
         unpended.color = -0x555556 // mid between LTGRAY - GRAY
-        empty.color = Color.parseColor("#e0e0e0")
-        checking.color = Color.parseColor("#ffee58")
+        empty.color = Color.parseColor("#bdbdbd")
+        checking.color = Color.parseColor("#d4e157")
         partial.color = Color.parseColor("#9ccc65")
-        writing.color = Color.parseColor("#ffca28")
-        complete.color = Color.parseColor("#212121")
+        writing.color = Color.parseColor("#4caf50")
+        complete.color = Color.parseColor("#455a64")
 
 //        if (isInEditMode) {
 //            for (i in 0 until cells * cells - 10) {

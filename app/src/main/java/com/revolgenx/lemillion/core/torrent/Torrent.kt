@@ -1,5 +1,7 @@
 package com.revolgenx.lemillion.core.torrent
 
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Base64
 import com.github.axet.androidlibrary.app.Storage
 import com.revolgenx.lemillion.core.db.torrent.TorrentEntity
@@ -8,11 +10,21 @@ import libtorrent.Libtorrent
 import timber.log.Timber
 import java.io.File
 import java.util.*
-import kotlin.math.ceil
 
 typealias TorrentProgressListener = ((torrent: Torrent) -> Unit)?
 
-class Torrent {
+
+class Torrent() : Parcelable {
+
+    constructor(parcel: Parcel) : this() {
+        handle = parcel.readLong()
+        hash = parcel.readString()!!
+        name = parcel.readString()!!
+        state = parcel.readString()!!
+        path = parcel.readString()!!
+        status = TorrentStatus.values()[parcel.readInt()]
+        createDate = Date(parcel.readLong())
+    }
 
     var torrentProgressListener: TorrentProgressListener = null
 
@@ -31,7 +43,9 @@ class Torrent {
         }
         set(value) {
             field = value
-            handle = Libtorrent.loadTorrent(path, Base64.decode(value, Base64.DEFAULT))
+            if (handle == -1L) {
+                handle = Libtorrent.loadTorrent(path, Base64.decode(value, Base64.DEFAULT))
+            }
             Timber.d("set state")
         }
 
@@ -52,11 +66,15 @@ class Torrent {
             Timber.d("progress $handle")
             if (handle == -1L) return 0f
             return if (Libtorrent.metaTorrent(handle)) {
-                val p = Libtorrent.torrentPendingBytesLength(handle)
-                if (p == 0L) {
-                    0f
+                if (status == TorrentStatus.SEEDING || completed) {
+                    100f
                 } else {
-                    ceil(Libtorrent.torrentPendingBytesCompleted(handle) * 100f / p)
+                    val p = Libtorrent.torrentPendingBytesLength(handle)
+                    if (p == 0L) {
+                        0f
+                    } else {
+                        Libtorrent.torrentPendingBytesCompleted(handle) * 100f / p
+                    }
                 }
             } else 0f
         }
@@ -71,14 +89,14 @@ class Torrent {
 
     var createDate: Date = Date(System.currentTimeMillis())
 
-    val downloadSpeed: Int
+    val downloadSpeed: Long
         get() {
-            return downloaded.currentSpeed
+            return downloaded.currentSpeed.toLong()
         }
 
-    val uploadSpeed: Int
+    val uploadSpeed: Long
         get() {
-            return uploaded.currentSpeed
+            return uploaded.currentSpeed.toLong()
         }
 
     var status: TorrentStatus = TorrentStatus.UNKNOWN
@@ -107,7 +125,8 @@ class Torrent {
     val totalSize: Long
         get() {
             if (handle == -1L) return 0
-            return Libtorrent.torrentPendingBytesLength(handle)
+            return if (Libtorrent.metaTorrent(handle)) Libtorrent.torrentPendingBytesLength(handle)
+            else 0
         }
 
     //TODO: CHECK FILE EXITS | CHECK STORAGE EJECTED CONDITION| READONLY | TORRENT_ALTERED | FREE_SPACE
@@ -151,8 +170,8 @@ class Torrent {
     }
 
 
-    fun check(){
-        if(handle == -1L) return
+    fun check() {
+        if (handle == -1L) return
 
         stop()
         Libtorrent.checkTorrent(handle)
@@ -199,9 +218,38 @@ class Torrent {
         } else false
     }
 
+
     override fun hashCode(): Int {
         return hash.hashCode()
     }
 
-    fun toEntity() = TorrentEntity(hash, state, status, path, createDate)
+    fun toEntity(): TorrentEntity {
+        Timber.d("to entity")
+        return TorrentEntity(hash, state, status, path, createDate)
+    }
+
+
+    override fun writeToParcel(dest: Parcel?, flags: Int) {
+        dest?.apply {
+            writeLong(handle)
+            writeString(hash)
+            writeString(name)
+            writeString(state)
+            writeString(path)
+            writeInt(status.ordinal)
+            writeLong(createDate.time)
+        }
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<Torrent> {
+        override fun createFromParcel(parcel: Parcel): Torrent {
+            return Torrent(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Torrent?> {
+            return arrayOfNulls(size)
+        }
+    }
 }

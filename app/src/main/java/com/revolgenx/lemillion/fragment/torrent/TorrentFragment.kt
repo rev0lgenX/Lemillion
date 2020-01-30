@@ -255,6 +255,7 @@ class TorrentFragment :
             inActionMode = false
     }
 
+
     inner class TorrentRecyclerAdapter :
         SelectableAdapter<TorrentRecyclerAdapter.TorrentViewHolder, Torrent>(object :
             DiffUtil.ItemCallback<Torrent>() {
@@ -314,7 +315,6 @@ class TorrentFragment :
                 torrent = item
                 torrent!!.torrentProgressListener = this
                 v.apply {
-                    torrentNameTv.text = torrent!!.name
                     torrentAdapterConstraintLayout.isSelected = isSelected(adapterPosition)
 
                     pausePlayIv.setOnClickListener {
@@ -352,9 +352,7 @@ class TorrentFragment :
                                 return@setOnClickListener
                             }
                         }
-
-                        TorrentMetaBottomSheetDialog.newInstance().show(fragmentManager!!, "torrent_meta_dialog")
-
+                        TorrentMetaBottomSheetDialog.newInstance(torrent!!).show(fragmentManager!!, "torrent_meta_dialog")
                     }
 
                     setOnLongClickListener {
@@ -376,13 +374,12 @@ class TorrentFragment :
 
             private fun updateView() {
                 v.apply {
-
+                    torrentNameTv.text = torrent!!.name
                     val progress = torrent!!.progress
                     torrentProgressBar.progress = progress
                     torrentProgressBar.labelText = progress.toInt().toString()
 
                     val status = torrent!!.status
-
                     if (currentStatus == status) return
 
                     currentStatus = status
@@ -392,7 +389,6 @@ class TorrentFragment :
                     } else
                         torrentFirstTv.text = status.name
 
-                    currentStatus = status
                     pausePlayIv.setImageResource(
                         when (status) {
                             QUEUE, SEEDING, DOWNLOADING, CHECKING -> {

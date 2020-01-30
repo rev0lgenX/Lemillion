@@ -1,10 +1,26 @@
 package com.revolgenx.lemillion.core.book
 
+import android.os.Parcel
+import android.os.Parcelable
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.download.DownloadEntity
 import com.revolgenx.lemillion.core.db.book.BookEntity
 
-class Book {
+class Book() : Parcelable {
+
+    constructor(parcel: Parcel) : this() {
+        id = parcel.readLong()
+        entity = parcel.readParcelable(DownloadEntity::class.java.classLoader)
+    }
+
+    override fun writeToParcel(dest: Parcel?, flags: Int) {
+        dest?.apply {
+            writeLong(id)
+            writeParcelable(entity, flags)
+        }
+    }
+
+
     var id: Long = -1
     var entity: DownloadEntity? = null
     var listener: (() -> Unit)? = null
@@ -47,21 +63,24 @@ class Book {
             BookProtocol.FTP -> {
                 Aria.download(this).loadFtp(id).stop()
             }
-            BookProtocol.UNKNOWN -> { }
+            BookProtocol.UNKNOWN -> {
+            }
         }
     }
 
     fun remove(withFiles: Boolean = false) {
-        when(bookProtocol){
+        when (bookProtocol) {
             BookProtocol.HTTP -> {
                 Aria.download(this).load(id).cancel(withFiles)
             }
             BookProtocol.FTP -> {
                 Aria.download(this).loadFtp(id).cancel(withFiles)
             }
-            BookProtocol.UNKNOWN -> {}
+            BookProtocol.UNKNOWN -> {
+            }
         }
     }
+
 
     override fun equals(other: Any?): Boolean {
         return if (other is Book) {
@@ -74,4 +93,17 @@ class Book {
     }
 
     fun toEntity() = BookEntity(id, bookProtocol)
+
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<Book> {
+        override fun createFromParcel(parcel: Parcel): Book {
+            return Book(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Book?> {
+            return arrayOfNulls(size)
+        }
+    }
 }

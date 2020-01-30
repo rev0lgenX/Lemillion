@@ -63,6 +63,10 @@ fun makeTextView(context:Context) = TextView(context).apply {
     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 }
 
+fun TextView.setNAText(txt:String){
+    text = if(txt.isEmpty()) "n/a"
+    else txt
+}
 
 
 inline fun Context.dip(value: Int): Int = (value * resources.displayMetrics.density).toInt()

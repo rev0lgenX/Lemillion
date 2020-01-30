@@ -285,11 +285,14 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
             if (taskId != -1L) {
                 Aria.download(this).load(taskId).resume()
             }
-        } else if (url.startsWith(FTP_PREFIX)) {
-            taskId = Aria.download(this).loadFtp(url).setFilePath(fullPath).setHighestPriority()
-            if (taskId != -1L) {
-                Aria.download(this).load(taskId).resume()
-            }
+//        } else if (url.startsWith(FTP_PREFIX)) {
+//            val option = FtpOption()
+//            option.setUrlEntity(FtpUrlEntity())
+//
+//            taskId = Aria.download(this).loadFtp(url).option(option).setFilePath(fullPath).setHighestPriority()
+//            if (taskId != -1L) {
+//                Aria.download(this).load(taskId).resume()
+//            }
         } else {
             context!!.showErrorDialog(getString(R.string.unsupported_url))
         }

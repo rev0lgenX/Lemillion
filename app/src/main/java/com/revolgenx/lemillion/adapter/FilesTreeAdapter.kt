@@ -17,6 +17,7 @@ import java.io.File
 import com.revolgenx.lemillion.adapter.meta.TorrentName
 import java.util.*
 import kotlin.Comparator
+import kotlin.math.ceil
 
 
 class FilesTreeAdapter(
@@ -69,7 +70,7 @@ class FilesTreeAdapter(
                     torrentFileCheck.isChecked = item.check
                     torrentFilePercentTv.text =
                         if (item.file!!.length > 0) {
-                            (item.file!!.bytesCompleted * 100f / item.file!!.length).toString() + "%"
+                            (ceil(item.file!!.bytesCompleted * 100f / item.file!!.length)).toString() + "%"
                         } else "100%"
 
                     torrentFileCheck.setOnCheckedChangeListener { buttonView, isChecked ->
@@ -149,6 +150,7 @@ class FilesTreeAdapter(
         }
 
         load()
+        updateTotal()
     }
 
 

@@ -1,121 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/scrollViewLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <com.google.android.material.appbar.AppBarLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="?actionBarSize"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/generalViewTv"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?selectableItemBackground"
+                android:fontFamily="@font/open_sans_regular"
+                android:gravity="center"
+                android:text="@string/general"
+                android:textColor="?android:textColorPrimary" />
+
+            <TextView
+                android:id="@+id/piecesViewTv"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?selectableItemBackground"
+                android:fontFamily="@font/open_sans_regular"
+                android:gravity="center"
+                android:text="@string/pieces"
+                android:textColor="?android:textColorPrimary" />
+
+            <TextView
+                android:id="@+id/filesViewTv"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?selectableItemBackground"
+                android:fontFamily="@font/open_sans_regular"
+                android:gravity="center"
+                android:text="@string/files"
+                android:textColor="?android:textColorPrimary" />
+
+        </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollViewLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:orientation="vertical">
+
 
             <LinearLayout
+                android:id="@+id/torrentGeneralLayout"
                 android:layout_width="match_parent"
-                android:layout_height="?actionBarSize"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/generalViewTv"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:fontFamily="@font/open_sans_regular"
-                    android:gravity="center"
-                    android:text="@string/general"
-                    android:textColor="?android:textColorPrimary" />
+                <com.revolgenx.lemillion.view.TitleTextView
+                    android:id="@+id/torrentNameTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:descriptionDrawable="@drawable/ic_edit"
+                    app:showDrawable="true"
+                    app:titleName="@string/name" />
 
-                <TextView
-                    android:id="@+id/piecesViewTv"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:fontFamily="@font/open_sans_regular"
-                    android:gravity="center"
-                    android:text="@string/pieces"
-                    android:textColor="?android:textColorPrimary" />
+                <com.revolgenx.lemillion.view.TitleTextView
+                    android:id="@+id/torrentHashTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:descriptionDrawable="@drawable/ic_copy"
+                    app:showDrawable="true"
+                    app:titleName="@string/hash" />
 
-                <TextView
-                    android:id="@+id/filesViewTv"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:fontFamily="@font/open_sans_regular"
-                    android:gravity="center"
-                    android:text="@string/files"
-                    android:textColor="?android:textColorPrimary" />
+                <com.revolgenx.lemillion.view.TitleTextView
+                    android:id="@+id/torrentPathTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:titleName="@string/path" />
+
+                <com.revolgenx.lemillion.view.TitleTextView
+                    android:id="@+id/torrentFileSizeTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:titleName="@string/size" />
+
+
+                <com.revolgenx.lemillion.view.TitleTextView
+                    android:id="@+id/torrentSeedersLeechersTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:titleName="@string/seeders_leechers" />
+
+                <com.revolgenx.lemillion.view.TitleTextView
+                    android:id="@+id/torrentPeersTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:titleName="@string/peers" />
+
+                <com.revolgenx.lemillion.view.TitleTextView
+                    android:id="@+id/torrentSpeedTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:titleName="@string/speed" />
 
             </LinearLayout>
-        </com.google.android.material.appbar.AppBarLayout>
 
-
-        <LinearLayout
-            android:id="@+id/torrentGeneralLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical">
-
-            <com.revolgenx.lemillion.view.TitleTextView
-                android:id="@+id/torrentNameTv"
+            <LinearLayout
+                android:id="@+id/torrentPiecesLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:titleName="@string/name" />
+                android:layout_marginTop="20dp"
+                android:orientation="vertical">
 
-            <com.revolgenx.lemillion.view.TitleTextView
-                android:id="@+id/torrentHashTv"
+                <com.revolgenx.lemillion.view.TitleTextView
+                    android:id="@+id/torrentPiecesTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:titleName="@string/pieces" />
+
+                <com.revolgenx.lemillion.view.PiecesView
+                    android:id="@+id/piecesView"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@color/gray" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/torrentFilesLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:descriptionDrawable="@drawable/ic_copy"
-                app:showDrawable="true"
-                app:titleName="@string/hash" />
+                android:orientation="vertical"
+                android:layout_marginTop="20dp">
 
-            <com.revolgenx.lemillion.view.TitleTextView
-                android:id="@+id/torrentPathTv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:titleName="@string/path" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:fontFamily="@font/open_sans_light"
+                    android:text="@string/files"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="12sp" />
+
+                <com.github.axet.androidlibrary.widgets.TreeRecyclerView
+                    android:id="@+id/treeRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/torrentPiecesLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:orientation="vertical">
-
-            <com.revolgenx.lemillion.view.TitleTextView
-                android:id="@+id/torrentPiecesTv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:titleName="@string/pieces" />
-
-            <com.revolgenx.lemillion.view.PiecesView
-                android:layout_width="match_parent"
-                android:layout_height="500dp" />
-
-        </LinearLayout>
-
-
-        <LinearLayout
-            android:id="@+id/torrentFilesLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                app:srcCompat="@drawable/ic_play" />
-        </LinearLayout>
-
-    </LinearLayout>
-
-</androidx.core.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

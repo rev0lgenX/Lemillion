@@ -20,6 +20,7 @@ import com.revolgenx.lemillion.core.db.torrent.TorrentRepository
 import com.revolgenx.lemillion.core.torrent.Torrent
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.torrent.TorrentStatus
+import com.revolgenx.lemillion.core.util.postEvent
 import com.revolgenx.lemillion.core.util.registerClass
 import com.revolgenx.lemillion.core.util.unregisterClass
 import com.revolgenx.lemillion.event.*
@@ -72,6 +73,7 @@ class MainService : Service() {
                             }
                         }
                     }
+                    postEvent(UpdateTorrentEvent(torrent.hash))
                 }
 
                 checkIfServiceIsEmpty()
@@ -88,7 +90,7 @@ class MainService : Service() {
 
             synchronized(torrentHashMap) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    torrentRepository.updateAll(torrentHashMap.values.toMutableList())
+                    torrentRepository.updateAll(torrentHashMap.values.toList())
                 }
                 handler.postDelayed(this, saveTimeDelay)
             }
