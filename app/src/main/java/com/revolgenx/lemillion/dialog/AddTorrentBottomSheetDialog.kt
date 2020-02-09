@@ -144,10 +144,21 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
                 showFetchingMetaData(true)
             }
 
-            CONTENT_PREFIX->{
-
+            CONTENT_PREFIX -> {
+                try {
+                    handle = engine.loadTorrent(
+                        TorrentInfo(uriContentToByteArray(context!!, uri)),
+                        null,
+                        null,
+                        null, null
+                    )
+                } catch (e: Exception) {
+                    context!!.showErrorDialog(e.message ?: "error")
+                    dismiss()
+                    return
+                }
             }
-            else->{
+            else -> {
                 context!!.showErrorDialog(getString(R.string.unknown_scheme))
                 dismiss()
             }

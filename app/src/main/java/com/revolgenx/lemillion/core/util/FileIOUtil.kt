@@ -6,6 +6,7 @@ import android.os.Environment
 import android.os.Environment.DIRECTORY_DOWNLOADS
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.io.FileNotFoundException
 import java.util.*
 
 
@@ -54,6 +55,15 @@ private fun getTempDir(context: Context): File? {
     }
 
     return tmpDir
+}
+
+@Throws(FileNotFoundException::class)
+fun uriContentToByteArray(context: Context, uri: Uri):ByteArray?{
+    return context.contentResolver.openInputStream(uri)?.let {
+        val bytes = it.readBytes()
+        it.close()
+        bytes
+    }
 }
 
 @Throws(Exception::class)

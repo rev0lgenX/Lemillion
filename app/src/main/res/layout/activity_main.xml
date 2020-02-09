@@ -33,12 +33,20 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 
+    <com.leinardi.android.speeddial.SpeedDialOverlayLayout
+        android:id="@+id/overlayLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"/>
+
     <com.leinardi.android.speeddial.SpeedDialView
         android:id="@+id/speedDialView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        app:sdMainFabClosedSrc="@drawable/ic_add" />
+        app:sdOverlayLayout="@id/overlayLayout"
+        app:sdUseReverseAnimationOnClose="true"
+        app:sdMainFabClosedSrc="@drawable/ic_add"/>
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

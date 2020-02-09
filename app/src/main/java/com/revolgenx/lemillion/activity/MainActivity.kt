@@ -168,6 +168,9 @@ class MainActivity : AppCompatActivity() {
             }
 
             CONTENT_PREFIX -> {
+                AddTorrentBottomSheetDialog.newInstance(uri!!)
+                    .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
+
 
 //                val contentTmp = makeTempFile(
 //                    this,
@@ -196,14 +199,6 @@ class MainActivity : AppCompatActivity() {
             }
 
 
-            HTTP_PREFIX -> {
-                if (CheckUtil.checkUrl(uri.toString())) {
-                    AddBookBottomSheetDialog.newInstance(uri.toString())
-                        .show(supportFragmentManager, "add_book_fragment_tag")
-                } else {
-                    showErrorDialog(getString(R.string.invalid_url))
-                }
-            }
         }
 
         this.uri = null
@@ -212,6 +207,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun initSpeedDial(iconColor: Int, iconColorInverse: Int) {
         speedDialView.apply {
+            this.overlayLayout?.setOnClickListener {
+                this.close(true)
+            }
+            
             mainFabClosedIconColor =
                 ContextCompat.getColor(context, R.color.colorPrimaryInverseDark)
             mainFabOpenedIconColor =
@@ -287,8 +286,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-    //TODO:CHECK MAGNET
     private fun openLibtorrentMagnetDialog() {
         MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
             title(R.string.magnet_link)
@@ -317,6 +314,7 @@ class MainActivity : AppCompatActivity() {
             .withChosenListener { dir, dirFile ->
                 if (dirFile.extension != "torrent") {
                     makeToast(resId = R.string.not_torrent_file_extension)
+                    return@withChosenListener
                 }
                 AddTorrentBottomSheetDialog.newInstance(dirFile.toUri())
                     .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
