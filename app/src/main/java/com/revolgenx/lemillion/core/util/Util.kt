@@ -5,12 +5,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.revolgenx.lemillion.R
 import com.github.razir.progressbutton.hideProgress
 import com.github.razir.progressbutton.showProgress
+import com.revolgenx.lemillion.R
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.greenrobot.eventbus.EventBus
 
 
@@ -36,6 +40,12 @@ fun <T> postEvent(cls: T) {
     EventBus.getDefault().post(cls)
 }
 
+
+fun <T> postStickyEvent(cls: T) {
+    EventBus.getDefault().postSticky(cls)
+}
+
+
 fun Context.makeToast(msg: String? = null, @StringRes resId: Int? = null) {
     Toast.makeText(this, msg ?: getString(resId!!), Toast.LENGTH_SHORT).show()
 }
@@ -59,15 +69,39 @@ fun TextView.showProgress(@StringRes resId: Int = 0, b: Boolean = false, progCol
 }
 
 
-fun makeTextView(context:Context) = TextView(context).apply {
-    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+fun makeTextView(context: Context) = TextView(context).apply {
+    layoutParams = ViewGroup.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    )
 }
 
-fun TextView.setNAText(txt:String){
-    text = if(txt.isEmpty()) "n/a"
+fun TextView.setNAText(txt: String) {
+    text = if (txt.isEmpty()) "n/a"
     else txt
 }
 
+fun Long.formatRemainingTime(): String {
+    var n = this
+    val day = n / (24 * 3600)
+
+    n %= (24 * 3600)
+    val hour = n / 3600
+
+    n %= 3600
+    val minutes = n / 60
+
+    n %= 60
+    val seconds = n
+    return "$day:$hour:$minutes:$seconds"
+}
+
+fun Context.color(@ColorRes id: Int) = ContextCompat.getColor(this, id)
+fun Fragment.color(@ColorRes id: Int) = context!!.color(id)
+
+suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineScope {
+    map { async { f(it) } }.awaitAll()
+}
 
 inline fun Context.dip(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 inline fun Context.dp(value: Int): Float = (value * resources.displayMetrics.density)

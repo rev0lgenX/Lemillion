@@ -3,7 +3,6 @@ package com.revolgenx.lemillion.app
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import com.arialyy.aria.core.Aria
-import com.arialyy.aria.core.common.HttpOption
 import com.revolgenx.lemillion.core.coreModules
 import com.revolgenx.lemillion.viewmodel.viewModelModule
 import org.koin.android.ext.koin.androidContext
@@ -20,11 +19,10 @@ class App : MultiDexApplication() {
         Aria.init(this).apply {
             appConfig.isNetCheck = true
             appConfig.isNotNetRetry = false
-            downloadConfig.threadNum = 6
+            downloadConfig.threadNum = 2
 //            downloadConfig.maxTaskNum = sharePreference().getInt(Key.MAX_TASK_NUM, 3)
             downloadConfig.maxTaskNum = 2
             downloadConfig.reTryNum = 5
-            downloadConfig.isConvertSpeed = true
         }
 
         Timber.plant(Timber.DebugTree())

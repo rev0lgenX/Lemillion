@@ -1,9 +1,11 @@
 package com.revolgenx.lemillion.fragment.book
 
+import android.content.Context
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.*
 import androidx.appcompat.view.ActionMode
+import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.AppCompatDrawableManager
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.iterator
@@ -12,19 +14,15 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.checkbox.checkBoxPrompt
-import com.arialyy.annotations.Download
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.inf.IEntity
-import com.arialyy.aria.core.task.DownloadTask
-import com.arialyy.aria.util.CommonUtil
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.activity.MainActivity
 import com.revolgenx.lemillion.adapter.SelectableAdapter
 import com.revolgenx.lemillion.core.book.Book
+import com.revolgenx.lemillion.core.book.BookProgressListener
 import com.revolgenx.lemillion.core.sorting.book.BookSortingComparator
-import com.revolgenx.lemillion.core.util.Status
-import com.revolgenx.lemillion.core.util.makeToast
-import com.revolgenx.lemillion.core.util.postEvent
+import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.dialog.BookMetaBottomSheetDialog
 import com.revolgenx.lemillion.event.BookEvent
 import com.revolgenx.lemillion.event.BookEventType
@@ -34,11 +32,8 @@ import com.revolgenx.lemillion.viewmodel.BookViewModel
 import kotlinx.android.synthetic.main.base_recycler_view_layout.view.*
 import kotlinx.android.synthetic.main.book_recycler_adapter_layout.view.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import timber.log.Timber
-import java.io.File
 
 class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookViewHolder, Book>() {
-
     companion object {
         fun newInstance() = BookFragment().apply {
             Aria.download(this).register()
@@ -94,6 +89,17 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                     adapter.selectAll()
                     true
                 }
+
+                R.id.bookRestart -> {
+                    postEvent(
+                        BookEvent(
+                            (adapter as BookRecyclerAdapter).getSelectedBooks(),
+                            BookEventType.BOOK_RESTART
+                        )
+                    )
+                    inActionMode = false
+                    true
+                }
                 android.R.id.home -> {
                     false
                 }
@@ -103,6 +109,9 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
 
         override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
             mode?.menuInflater?.inflate(R.menu.book_action_menu, menu)
+            if (menu is MenuBuilder) {
+                menu.setOptionalIconsVisible(true)
+            }
             menu?.iterator()?.forEach {
                 when (it.itemId) {
                     R.id.bookDelete -> {
@@ -114,6 +123,11 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                     R.id.bookSelectAllItem -> {
                         it.icon = AppCompatDrawableManager.get()
                             .getDrawable(context!!, R.drawable.ic_select_all)
+                            .apply { DrawableCompat.setTint(this, iconColor) }
+                    }
+                    R.id.bookRestart -> {
+                        it.icon = AppCompatDrawableManager.get()
+                            .getDrawable(context!!, R.drawable.ic_restart)
                             .apply { DrawableCompat.setTint(this, iconColor) }
                     }
                 }
@@ -164,66 +178,6 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
 
     }
 
-
-    private fun invokeListener(task: DownloadTask?) {
-        viewModel.getBook(task)?.listener?.invoke()
-    }
-
-    @Download.onWait
-    fun onWait(task: DownloadTask?) {
-        Timber.d("wait ==> " + task?.downloadEntity!!.fileName)
-        invokeListener(task)
-    }
-
-    @Download.onPre
-    fun onPre(task: DownloadTask?) {
-        Timber.d("onPre")
-        invokeListener(task)
-    }
-
-    @Download.onTaskStart
-    fun taskStart(task: DownloadTask?) {
-        Timber.d("onStart")
-        invokeListener(task)
-    }
-
-    @Download.onTaskRunning
-    fun running(task: DownloadTask?) {
-        Timber.d("running")
-        invokeListener(task)
-    }
-
-    @Download.onTaskResume
-    fun taskResume(task: DownloadTask?) {
-        Timber.d("resume")
-        invokeListener(task)
-    }
-
-    @Download.onTaskStop
-    fun taskStop(task: DownloadTask?) {
-        Timber.d("stop")
-        invokeListener(task)
-    }
-
-    @Download.onTaskCancel
-    fun taskCancel(task: DownloadTask?) {
-        Timber.d("cancel")
-        invokeListener(task)
-    }
-
-    @Download.onTaskFail
-    fun taskFail(task: DownloadTask?) {
-        Timber.d("fail")
-        invokeListener(task)
-    }
-
-
-    @Download.onTaskComplete
-    fun taskComplete(task: DownloadTask?) {
-        Timber.d("path ==> " + task!!.downloadEntity.filePath)
-        Timber.d("md5Code ==> " + CommonUtil.getFileMD5(File(task.filePath)))
-        invokeListener(task)
-    }
 
     override fun resumeAll() {
         viewModel.resumeAll()
@@ -283,6 +237,11 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
             return getSelectedItems().map { currentList[it].entity!!.id }
         }
 
+        fun getSelectedBooks(): List<Book> {
+            return getSelectedItems().map { currentList[it] }
+        }
+
+
         override fun performFiltering(constraint: CharSequence?) {
             if (constraint?.length == 0) {
                 if (searchTempList.isNotEmpty()) {
@@ -304,14 +263,21 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
         }
 
         fun clearListener() {
-            adapter.currentList.forEach { it.listener = null }
+            adapter.currentList.forEach {
+                it.removeAllListener()
+            }
         }
 
-        inner class BookViewHolder(private val v: View) : RecyclerView.ViewHolder(v) {
+        inner class BookViewHolder(private val v: View) : RecyclerView.ViewHolder(v),
+            BookProgressListener {
             private var book: Book? = null
 
             init {
                 addListener()
+            }
+
+            override fun invoke() {
+                updateView()
             }
 
             private fun addListener() {
@@ -329,15 +295,12 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                             return@setOnClickListener
                         }
 
-                        when (book!!.entity!!.state) {
-                            IEntity.STATE_WAIT, IEntity.STATE_RUNNING -> {
-                                book!!.stop()
-                                postEvent(BookEvent(listOf(book!!), BookEventType.BOOK_PAUSED))
-                            }
-                            else -> {
-                                book!!.resume()
-                                postEvent(BookEvent(listOf(book!!), BookEventType.BOOK_RESUMED))
-                            }
+                        if (book!!.isPaused()) {
+                            book!!.resume()
+                            postEvent(BookEvent(listOf(book!!), BookEventType.BOOK_RESUMED))
+                        } else {
+                            book!!.stop()
+                            postEvent(BookEvent(listOf(book!!), BookEventType.BOOK_PAUSED))
                         }
                     }
                 }
@@ -346,19 +309,42 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
             fun bind(book: Book) {
                 this.book = book
 
-                book.listener = {
-                    Timber.d("listener invoked")
-                    updateView()
-                }
+                book.addListener(this)
 
+                v.setOnClickListener {
+                    if (selectedItemCount > 0) {
+                        toggleSelection(adapterPosition)
+                        return@setOnClickListener
+                    }
+                    if (selectedItemCount <= 0) {
+                        if (inActionMode) {
+                            inActionMode = false
+                            return@setOnClickListener
+                        }
+                    }
+
+                    BookMetaBottomSheetDialog.newInstance(book)
+                        .show(fragmentManager!!, "book_meta_dialog")
+                }
+                v.setOnLongClickListener {
+                    toggleSelection(adapterPosition)
+                    if (!inActionMode) {
+                        inActionMode = true
+                    }
+
+                    if (selectedItemCount <= 0) {
+                        if (inActionMode) inActionMode = false
+                    }
+
+                    true
+                }
                 updateView()
             }
 
             fun unbind() {
-                book?.listener = null
+                book?.removeListener(this)
                 book = null
             }
-
 
             private fun updateView() {
                 v.apply {
@@ -366,79 +352,44 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
 
                     bookConstraintLayout.isSelected = isSelected(adapterPosition)
                     pageNameTv.text = book!!.entity!!.fileName
-                    pageSpeedTv.text = book!!.entity!!.convertSpeed
                     pageProgressBar.progress = book!!.entity!!.percent.toFloat()
                     pageProgressBar.labelText = book!!.entity!!.percent.toString()
-                    pausePlayIv.setImageResource(
-                        when (book!!.entity!!.state) {
-                            IEntity.STATE_RUNNING, IEntity.STATE_WAIT, IEntity.STATE_PRE, IEntity.STATE_POST_PRE -> {
-                                R.drawable.ic_pause
+
+                    indicatorView.setBackgroundColor(
+                        when (book!!.state) {
+                            IEntity.STATE_RUNNING, IEntity.STATE_PRE, IEntity.STATE_POST_PRE, IEntity.STATE_WAIT -> {
+                                color(R.color.downloadingColor)
+                            }
+                            IEntity.STATE_CANCEL, IEntity.STATE_STOP -> {
+                                color(R.color.pausedColor)
+                            }
+                            IEntity.STATE_COMPLETE -> {
+                                color(R.color.completedColor)
+                            }
+                            IEntity.STATE_FAIL -> {
+                                color(R.color.errorColor)
                             }
                             else -> {
-                                R.drawable.ic_play
+                                color(R.color.gray)
                             }
                         }
                     )
 
-                    setOnClickListener {
-                        if (selectedItemCount > 0) {
-                            toggleSelection(adapterPosition)
-                            return@setOnClickListener
+                    pausePlayIv.setImageResource(
+                        if (book!!.isPaused()) {
+                            R.drawable.ic_play
+                        } else {
+                            R.drawable.ic_pause
                         }
-                        if (selectedItemCount <= 0) {
-                            if (inActionMode) {
-                                inActionMode = false
-                                return@setOnClickListener
-                            }
+                    )
+                    pageStatusTv.text =
+                        if (book!!.state == IEntity.STATE_RUNNING) {
+                            "${book!!.stateFormat(context)} · ET: ${book!!.eta.formatRemainingTime()}"
+                        } else {
+                            book!!.stateFormat(context)
                         }
-
-                        BookMetaBottomSheetDialog.newInstance()
-                    }
-
-                    setOnLongClickListener {
-                        toggleSelection(adapterPosition)
-                        if (!inActionMode) {
-                            inActionMode = true
-                        }
-
-                        if (selectedItemCount <= 0) {
-                            if (inActionMode) inActionMode = false
-                        }
-
-                        true
-                    }
-
-                    pageStatusTv.text = when (book!!.entity!!.state) {
-                        IEntity.STATE_RUNNING -> {
-                            getString(R.string.downloading)
-                        }
-                        IEntity.STATE_CANCEL -> {
-                            getString(R.string.canceled)
-                        }
-                        IEntity.STATE_COMPLETE -> {
-                            getString(R.string.completed)
-                        }
-                        IEntity.STATE_FAIL -> {
-                            getString(R.string.failed)
-                        }
-                        IEntity.STATE_OTHER -> {
-                            getString(R.string.unknown)
-                        }
-                        IEntity.STATE_STOP -> {
-                            getString(R.string.paused)
-                        }
-                        IEntity.STATE_PRE -> {
-                            getString(R.string.connecting)
-                        }
-
-                        IEntity.STATE_POST_PRE -> {
-                            getString(R.string.connecting)
-                        }
-                        IEntity.STATE_WAIT -> {
-                            getString(R.string.waiting)
-                        }
-                        else -> ""
-                    }
+                    pageSpeedTv.text =
+                        "${book!!.totalSize.formatSize()} · ${book!!.speed.formatSpeed()}"
                 }
             }
         }
@@ -448,5 +399,7 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
         (adapter as BookRecyclerAdapter).clearListener()
         super.onDestroy()
     }
+
+    override fun getTitle(context: Context): String = context.getString(R.string.file)
 
 }

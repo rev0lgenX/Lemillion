@@ -16,7 +16,7 @@ import androidx.appcompat.widget.AppCompatDrawableManager
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.net.toFile
+import androidx.core.net.toUri
 import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -42,21 +42,21 @@ import com.revolgenx.lemillion.core.sorting.torrent.TorrentSorting
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSortingComparator
 import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.dialog.*
+import com.revolgenx.lemillion.event.OnBackPressed
 import com.revolgenx.lemillion.event.ShutdownEvent
 import com.revolgenx.lemillion.event.TorrentEngineEvent
 import com.revolgenx.lemillion.event.TorrentEngineEventTypes
 import com.revolgenx.lemillion.fragment.BaseRecyclerFragment
 import com.revolgenx.lemillion.fragment.book.BookFragment
 import com.revolgenx.lemillion.fragment.torrent.TorrentFragment
+import com.revolgenx.lemillion.view.makePagerAdapter
 import kotlinx.android.synthetic.main.activity_main.*
-import libtorrent.Libtorrent
-import org.apache.commons.io.FileUtils
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
 class MainActivity : AppCompatActivity() {
 
-    private var adapter: MainPagerAdapter? = null
+    private var adapter: FragmentPagerAdapter? = null
 
     @ColorInt
     var iconColorInverse: Int = 0
@@ -100,6 +100,7 @@ class MainActivity : AppCompatActivity() {
             setTheme(R.style.BaseTheme_Dark)
         }
         setContentView(R.layout.activity_main)
+        checkPermission()
         setSupportActionBar(mainToolbar)
         supportActionBar?.title = getString(R.string.app_name)
 
@@ -112,7 +113,12 @@ class MainActivity : AppCompatActivity() {
 
         initSpeedDial(iconColor, iconColorInverse)
 
-        adapter = MainPagerAdapter(supportFragmentManager)
+        adapter = makePagerAdapter(
+            listOf(
+                TorrentFragment.newInstance(),
+                BookFragment.newInstance()
+            )
+        )
         mainTabLayout.setupWithViewPager(viewPager)
         viewPager.currentItem = 0
         viewPager.adapter = adapter
@@ -144,54 +150,49 @@ class MainActivity : AppCompatActivity() {
 
         when (uri!!.scheme) {
             MAGNET_PREFIX -> {
-                val t = Libtorrent.addMagnet(storagePath(this), uri.toString())
-                if (t == -1L) {
-                    showErrorDialog(Libtorrent.error())
-                } else {
-                    //open dialog
-                    AddTorrentBottomSheetDialog.newInstance(t)
-                        .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
-                }
+                AddTorrentBottomSheetDialog.newInstance(uri!!)
+                    .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
             }
             FILE_PREFIX -> {
+                AddTorrentBottomSheetDialog.newInstance(uri!!)
+                    .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
+            }
 
-                val buf = FileUtils.readFileToByteArray(uri!!.toFile())
-                val t = Libtorrent.addTorrentFromBytes(storagePath(this), buf)
-                if (t == -1L) {
-                    showErrorDialog(Libtorrent.error())
+            HTTP_PREFIX, HTTPS_PREFIX -> {
+                if (CheckUtil.checkUrl(uri.toString())) {
+                    AddBookBottomSheetDialog.newInstance(uri.toString())
+                        .show(supportFragmentManager, "add_book_fragment_tag")
                 } else {
-                    //open dialog
-                    AddTorrentBottomSheetDialog.newInstance(t)
-                        .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
+                    showErrorDialog(getString(R.string.invalid_url))
                 }
             }
 
             CONTENT_PREFIX -> {
 
-                val contentTmp = makeTempFile(
-                    this,
-                    ".torrent"
-                )
-
-                copyContentURIToFile(
-                    this,
-                    uri!!,
-                    contentTmp
-                )
-
-                if (contentTmp.exists()) {
-                    val buf = FileUtils.readFileToByteArray(contentTmp)
-                    val t = Libtorrent.addTorrentFromBytes(storagePath(this), buf)
-                    if (t == -1L) {
-                        showErrorDialog(Libtorrent.error())
-                    } else {
-                        //open dialog
-                        AddTorrentBottomSheetDialog.newInstance(t)
-                            .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
-                    }
-                } else {
-                    showErrorDialog("Unknown Error")
-                }
+//                val contentTmp = makeTempFile(
+//                    this,
+//                    ".torrent"
+//                )
+//
+//                copyContentURIToFile(
+//                    this,
+//                    uri!!,
+//                    contentTmp
+//                )
+//
+//                if (contentTmp.exists()) {
+//                    val buf = FileUtils.readFileToByteArray(contentTmp)
+//                    val t = Libtorrent.addTorrentFromBytes(storagePath(this), buf)
+//                    if (t == -1L) {
+//                        showErrorDialog(Libtorrent.error())
+//                    } else {
+//                        //open dialog
+//                        AddTorrentBottomSheetDialog.newInstance(t)
+//                            .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
+//                    }
+//                } else {
+//                    showErrorDialog("Unknown Error")
+//                }
             }
 
 
@@ -287,19 +288,14 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    //TODO:CHECK MAGNET
     private fun openLibtorrentMagnetDialog() {
         MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
             title(R.string.magnet_link)
             inputDialog(this@MainActivity) { _, text ->
-                val t = Libtorrent.addMagnet(storagePath(context), text.toString())
-                if (t == -1L) {
-                    showErrorDialog(Libtorrent.error())
-                } else {
-                    //open dialog
-                    AddTorrentBottomSheetDialog.newInstance(t)
-                        .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
-                    dismiss()
-                }
+                AddTorrentBottomSheetDialog.newInstance(text.toString().toUri())
+                    .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
+                dismiss()
             }
 
             noAutoDismiss()
@@ -322,16 +318,8 @@ class MainActivity : AppCompatActivity() {
                 if (dirFile.extension != "torrent") {
                     makeToast(resId = R.string.not_torrent_file_extension)
                 }
-
-                val buf = FileUtils.readFileToByteArray(dirFile)
-                val t = Libtorrent.addTorrentFromBytes(storagePath(this), buf)
-                if (t == -1L) {
-                    showErrorDialog(Libtorrent.error())
-                } else {
-                    //open dialog
-                    AddTorrentBottomSheetDialog.newInstance(t)
-                        .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
-                }
+                AddTorrentBottomSheetDialog.newInstance(dirFile.toUri())
+                    .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
             }
             .withResources(R.string.choose_a_file, R.string.done, R.string.cancel)
             .titleFollowsDir(true)
@@ -515,6 +503,11 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         unregisterClass(this)
         super.onDestroy()
+    }
+
+    override fun onBackPressed() {
+        postEvent(OnBackPressed())
+        super.onBackPressed()
     }
 
 

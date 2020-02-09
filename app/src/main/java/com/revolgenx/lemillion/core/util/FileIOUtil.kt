@@ -7,8 +7,6 @@ import android.os.Environment.DIRECTORY_DOWNLOADS
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.util.*
-import java.util.UUID.randomUUID
-import org.apache.commons.io.FileUtils.copyInputStreamToFile
 
 
 val GB: Long = 1073741824 // 1024 * 1024 * 1024
@@ -30,13 +28,13 @@ fun getDefualtStoragePath(): String {
 fun Long.formatSize(): String {
     return when {
         this >= GB -> {
-            String.format("%.2f gb", this * 1.0 / GB)
+            String.format("%.1f GB", this * 1.0 / GB)
         }
         this >= MB -> {
-            String.format("%.2f mb", this * 1.0 / MB)
+            String.format("%.1f MB", this * 1.0 / MB)
         }
         else -> {
-            String.format("%.2f kb", this * 1.0 / KB)
+            String.format("%.1f KB", this * 1.0 / KB)
         }
     }
 }

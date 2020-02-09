@@ -2,10 +2,10 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:id="@+id/coordinatorLayout"
     tools:context=".activity.MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -30,8 +30,7 @@
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
-
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 
     <com.leinardi.android.speeddial.SpeedDialView
@@ -39,7 +38,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        app:sdMainFabClosedSrc="@drawable/ic_add"/>
+        app:sdMainFabClosedSrc="@drawable/ic_add" />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

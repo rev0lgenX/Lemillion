@@ -47,6 +47,16 @@
     <color name="text_light_opaque">#90ffffff</color>
     <color name="overlay_dark">#90000000</color>
 
+    <!--piece color-->
+    <color name="empty_piece">#CACACA</color>
+    <color name="complete_piece">#00675b</color>
+
+    <!--indicator color-->
+    <color name="downloadingColor">#DCECA8</color>
+    <color name="pausedColor">#FBB03B</color>
+    <color name="completedColor">#1A77D3</color>
+    <color name="seedingColor">#DCECA8</color>
+    <color name="errorColor">#E01B22</color>
     <!--color-->
     <color name="white">#ffffff</color>
     <color name="black">#000000</color>

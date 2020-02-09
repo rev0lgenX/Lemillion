@@ -1,6 +1,8 @@
 package com.revolgenx.lemillion.viewmodel
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -30,6 +32,7 @@ class TorrentViewModel(
 ) : ViewModel() {
 
     private val torrentHashMap = mutableMapOf<String, Torrent>()
+    private val hd: Handler
 
     val torrentResource = MutableLiveData<Resource<List<Torrent>>>()
     var sorting =
@@ -48,48 +51,27 @@ class TorrentViewModel(
 
     init {
         registerClass(this)
+        hd = Handler(Looper.getMainLooper())
     }
 
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onTorrentAddedEvent(event: TorrentAddedEvent) {
         when (event.type) {
-            TorrentAddedEventTypes.MAGNET_ADDED -> {
-                viewModelScope.launch(Dispatchers.IO) {
-                    val torrent = Torrent().apply {
-                        hash = event.hash
-                        path = event.path
-                        handle = event.handle
-                    }
-
-                    val resource = torrentRepository.add(torrent)
-
-                    //TODO SERVICES
-                    if (resource.status == Status.SUCCESS) {
-                        torrentHashMap[torrent.hash] = torrent
-                        updateResource()
-                    }
-                }
-
-            }
-            TorrentAddedEventTypes.MAGNET_ADD_ERROR -> {
-                context.makeToast(context.getString(R.string.unable_to_add_magnet))
-            }
-
             TorrentAddedEventTypes.TORRENT_ADDED -> {
                 viewModelScope.launch(Dispatchers.IO) {
-                    val torrent = Torrent().apply {
-                        hash = event.hash
-                        path = event.path
-                        handle = event.handle
-                    }
-
+                    val torrent = event.torrent
                     val resource = torrentRepository.add(torrent)
 
                     if (resource.status == Status.SUCCESS) {
+                        torrent.simpleState = true
+                        if (torrent.isPaused()) {
+                            torrent.start()
+                        }
                         torrentHashMap[torrent.hash] = torrent
                         updateResource()
                     }
+                    postEvent(TorrentEvent(listOf(torrent), TorrentEventType.TORRENT_RESUMED))
                 }
             }
             TorrentAddedEventTypes.TORRENT_ADD_ERROR -> {
@@ -107,8 +89,8 @@ class TorrentViewModel(
 
             if (resource.status == Status.SUCCESS) {
                 torrents.forEach { torrent ->
-                    torrent.torrentProgressListener = null
                     torrent.remove(event.withFiles)
+                    torrent.removeAllListener()
                     torrentHashMap.remove(torrent.hash)
                 }
                 updateResource()
@@ -138,7 +120,20 @@ class TorrentViewModel(
     }
 
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onUpdateDatabase(event: UpdateDataBase) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val data = event.data
+            if (data is Torrent && !context.isServiceRunning()) {
+                torrentRepository.update(data)
+            }
+        }
+    }
+
+
     fun resumeAll() {
+        if(torrentHashMap.isEmpty()) return
+
         torrentHashMap.values.forEach {
             it.start()
             it.update()
@@ -159,6 +154,8 @@ class TorrentViewModel(
     }
 
     fun pauseAll() {
+        if(torrentHashMap.isEmpty()) return
+
         torrentHashMap.values.forEach {
             it.stop()
             it.update()
@@ -202,6 +199,11 @@ class TorrentViewModel(
                             resource.data!!.forEach { torrent ->
                                 torrentHashMap[torrent.hash] = torrent
                             }
+
+                            resource.data.filter { !it.isPaused() }.takeIf { it.isNotEmpty() }
+                                ?.let {
+                                    postEvent(TorrentEvent(it, TorrentEventType.TORRENT_RESUMED))
+                                }
                             updateResource()
                         }
                         connector.disconnect()
@@ -257,6 +259,16 @@ class TorrentViewModel(
         torrentHashMap.clear()
         connector.disconnect()
         super.onCleared()
+    }
+
+    fun getTorrent(toHex: String?): Torrent? {
+        return torrentHashMap[toHex]
+    }
+
+    fun removeAllTorrentEngineListener() {
+        torrentHashMap.forEach { u ->
+            u.value.removeEngineListener()
+        }
     }
 
 }

@@ -9,30 +9,24 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.arialyy.annotations.Download
 import com.arialyy.aria.core.Aria
-import com.arialyy.aria.core.task.DownloadTask
-import com.arialyy.aria.util.CommonUtil
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.activity.MainActivity
 import com.revolgenx.lemillion.core.book.Book
+import com.revolgenx.lemillion.core.db.book.BookRepository
 import com.revolgenx.lemillion.core.db.torrent.TorrentRepository
 import com.revolgenx.lemillion.core.torrent.Torrent
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
-import com.revolgenx.lemillion.core.torrent.TorrentStatus
-import com.revolgenx.lemillion.core.util.postEvent
 import com.revolgenx.lemillion.core.util.registerClass
 import com.revolgenx.lemillion.core.util.unregisterClass
 import com.revolgenx.lemillion.event.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import libtorrent.Libtorrent
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.koin.android.ext.android.inject
 import timber.log.Timber
-import java.io.File
 
 class MainService : Service() {
 
@@ -51,51 +45,39 @@ class MainService : Service() {
     val bookHashMap = mutableMapOf<Long, Book>()
     private val torrentEngine by inject<TorrentEngine>()
     private val torrentRepository by inject<TorrentRepository>()
+    private val bookRepository by inject<BookRepository>()
 
-    private val runnable = object : Runnable {
-        override fun run() {
-            if (torrentHashMap.isEmpty()) return
+//    private val runnable = object : Runnable {
+//        override fun run() {
+//            if (torrentHashMap.isEmpty()) return
+//
+//            synchronized(torrentHashMap) {
+//                val torrents = torrentHashMap.values.iterator()
+//
+//                torrents.forEach { torrent ->
+//                    when (torrent.status) {
+//                        TorrentStatus.SEEDING, TorrentStatus.DOWNLOADING, TorrentStatus.QUEUE, TorrentStatus.CHECKING -> {
+//                            torrent.update()
+//                        }
+//                        else -> {
+////                        torrentHashMap.remove(torrent.hash)
+//                            torrents.remove()
+//                            torrent.update()
+//                            CoroutineScope(Dispatchers.IO).launch {
+//                                torrentRepository.update(torrent)
+//                            }
+//                        }
+//                    }
+//                    postEvent(UpdateTorrentEvent(torrent.hash))
+//                }
+//
+//                checkIfServiceIsEmpty()
+//                handler.postDelayed(this, torrentUpdateTime)
+//            }
+//
+//        }
+//    }
 
-            synchronized(torrentHashMap) {
-                val torrents = torrentHashMap.values.iterator()
-
-                torrents.forEach { torrent ->
-                    when (torrent.status) {
-                        TorrentStatus.SEEDING, TorrentStatus.DOWNLOADING, TorrentStatus.QUEUE, TorrentStatus.CHECKING -> {
-                            torrent.update()
-                        }
-                        else -> {
-//                        torrentHashMap.remove(torrent.hash)
-                            torrents.remove()
-                            torrent.update()
-                            CoroutineScope(Dispatchers.IO).launch {
-                                torrentRepository.update(torrent)
-                            }
-                        }
-                    }
-                    postEvent(UpdateTorrentEvent(torrent.hash))
-                }
-
-                checkIfServiceIsEmpty()
-                handler.postDelayed(this, torrentUpdateTime)
-            }
-
-        }
-    }
-
-
-    private val saveRunnable = object : Runnable {
-        override fun run() {
-            if (torrentHashMap.isEmpty()) return
-
-            synchronized(torrentHashMap) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    torrentRepository.updateAll(torrentHashMap.values.toList())
-                }
-                handler.postDelayed(this, saveTimeDelay)
-            }
-        }
-    }
 
     inner class LocalBinder : Binder() {
         val service: MainService
@@ -130,6 +112,7 @@ class MainService : Service() {
     }
 
 
+    //TODO://CHECK FOR DIFFERENT EVENTS
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun torrentEvent(event: TorrentEvent) {
         when (event.type) {
@@ -137,12 +120,8 @@ class MainService : Service() {
                 synchronized(torrentHashMap) {
                     event.torrents.forEach { torrent ->
                         torrentHashMap[torrent.hash] = torrent
-                        torrent.update()
                     }
                 }
-                handler.post(runnable)
-                handler.removeCallbacks(saveRunnable)
-                handler.postDelayed(saveRunnable, saveTimeDelay)
             }
 
             TorrentEventType.TORRENT_PAUSED -> {
@@ -152,11 +131,28 @@ class MainService : Service() {
                     }
 
                     event.torrents.forEach { torrent ->
-                        torrent.update()
                         torrentHashMap.remove(torrent.hash)
                     }
-
-                    Timber.d("torrent paused")
+                    checkIfServiceIsEmpty()
+                }
+            }
+            TorrentEventType.TORRENT_FINISHED -> {
+                //todo:send notification
+                synchronized(torrentHashMap) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        torrentRepository.updateAll(event.torrents)
+                    }
+                }
+            }
+            TorrentEventType.TORRENT_ERROR -> {
+                //todo:send notification
+                synchronized(torrentHashMap) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        torrentRepository.updateAll(event.torrents)
+                    }
+                    event.torrents.forEach { torrent ->
+                        torrentHashMap.remove(torrent.hash)
+                    }
                     checkIfServiceIsEmpty()
                 }
             }
@@ -177,7 +173,6 @@ class MainService : Service() {
                 synchronized(bookHashMap) {
                     event.books.forEach { book ->
                         bookHashMap[book.entity!!.id] = book
-                        book.listener?.invoke()
                     }
                 }
             }
@@ -185,9 +180,32 @@ class MainService : Service() {
                 synchronized(bookHashMap) {
                     event.books.forEach { book ->
                         bookHashMap.remove(book.entity!!.id)
-                        book.listener?.invoke()
                     }
                     checkIfServiceIsEmpty()
+                }
+            }
+
+            BookEventType.BOOK_COMPLETED -> {
+                //todo:notification
+                synchronized(bookHashMap) {
+                    event.books.forEach { book ->
+                        bookHashMap.remove(book.entity!!.id)
+                    }
+                    checkIfServiceIsEmpty()
+                }
+            }
+            BookEventType.BOOK_RESTART -> {
+                synchronized(bookHashMap) {
+                    event.books.forEach { book ->
+                        book.reStart()
+                        bookHashMap[book.entity!!.id] = book
+                    }
+                }
+            }
+            BookEventType.BOOK_FAILED -> {
+                //todo:notification
+                event.books.forEach {
+                    removeBook(it.id)
                 }
             }
         }
@@ -199,73 +217,27 @@ class MainService : Service() {
         checkIfServiceIsEmpty()
     }
 
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onUpdateDatabase(event: UpdateDataBase) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = event.data
+            if (data is Torrent) {
+                torrentRepository.update(data)
+            } else if (data is Book) {
+                bookRepository.update(data)
+            }
+        }
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onShutdownEvent(event: ShutdownEvent) {
-        Libtorrent.pause()
+//        Libtorrent.pause()
+        torrentHashMap.values.forEach { it.stop() }
         torrentHashMap.clear()
         Aria.download(this).stopAllTask()
         bookHashMap.clear()
         stopService()
-    }
-
-    @Download.onWait
-    fun onWait(task: DownloadTask?) {
-        Timber.d("wait ==> " + task?.downloadEntity!!.fileName)
-    }
-
-    @Download.onPre
-    fun onPre(task: DownloadTask?) {
-        Timber.d("onPre")
-
-    }
-
-    @Download.onTaskStart
-    fun taskStart(task: DownloadTask?) {
-        Timber.d("onStart")
-
-    }
-
-    @Download.onTaskRunning
-    fun running(task: DownloadTask?) {
-        Timber.d("running")
-
-    }
-
-    @Download.onTaskResume
-    fun taskResume(task: DownloadTask?) {
-        Timber.d("resume")
-
-    }
-
-    @Download.onTaskStop
-    fun taskStop(task: DownloadTask?) {
-        Timber.d("stop")
-
-    }
-
-    @Download.onTaskCancel
-    fun taskCancel(task: DownloadTask?) {
-        Timber.d("cancel")
-
-    }
-
-    @Download.onTaskFail
-    fun taskFail(task: DownloadTask?) {
-        if (task == null) return
-        Timber.d("fail")
-
-        removeBook(task.entity.id)
-    }
-
-
-    @Download.onTaskComplete
-    fun taskComplete(task: DownloadTask?) {
-        if (task == null) return
-
-        Timber.d("path ==> " + task.downloadEntity.filePath)
-        Timber.d("md5Code ==> " + CommonUtil.getFileMD5(File(task.filePath)))
-
-        removeBook(task.entity.id)
     }
 
 

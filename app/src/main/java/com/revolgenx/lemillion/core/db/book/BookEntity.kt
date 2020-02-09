@@ -9,10 +9,14 @@ import com.revolgenx.lemillion.core.book.BookProtocol
 data class BookEntity(
     @PrimaryKey
     var book_id: Long,
-    var book_protocol: BookProtocol
+    var book_protocol: BookProtocol,
+    var has_error: Boolean,
+    var error_msg: String
 ) {
     fun toBook(): Book = Book().apply {
         id = book_id
         bookProtocol = book_protocol
+        hasError = has_error
+        errorMsg = error_msg
     }
 }

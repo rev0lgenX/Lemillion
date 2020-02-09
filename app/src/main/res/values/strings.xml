@@ -85,6 +85,18 @@
     <string name="seeders_leechers">Seeders(S) / Leechers(L)</string>
     <string name="peers">Peers</string>
     <string name="url">Url</string>
+    <string name="downloading_meta_failed">Failed</string>
+    <string name="engine_stopping">Engine Stopping</string>
+    <string name="meta">Meta</string>
+    <string name="added">Added</string>
+    <string name="created">Created</string>
+    <string name="downloaded">Downloaded</string>
+    <string name="downloaded_uploaded">Downloaded/Uploaded</string>
+    <string name="eta">Eta</string>
+    <string name="tracker">Tracker</string>
+    <string name="peer">Peer</string>
+    <string name="unknown_scheme">Unknown Scheme</string>
+    <string name="restart">Restart</string>
 
 
     <string-array name="sort_array">

@@ -85,7 +85,7 @@ class BookViewModel(
     fun onBookEvent(event: BookEvent) {
         if (context.isServiceRunning()) return
 
-        if (event.bookEventType == BookEventType.BOOK_RESUMED) {
+        if (event.bookEventType == BookEventType.BOOK_RESUMED || event.bookEventType == BookEventType.BOOK_RESTART) {
             connector.connect { service, connected ->
                 connector.serviceConnectionListener = null
                 if (connected) {
@@ -102,6 +102,8 @@ class BookViewModel(
             val book = event.book
             bookRepository.add(book)
             bookHashMap[book.id] = book
+            book.resume()
+            postEvent(BookEvent(listOf(book), BookEventType.BOOK_RESUMED))
             updateResource()
         }
     }
@@ -124,6 +126,7 @@ class BookViewModel(
 
 
     fun resumeAll() {
+        if(bookHashMap.isEmpty()) return
         Aria.download(this).resumeAllTask()
         connector.connect { service, connected ->
             connector.serviceConnectionListener = null
@@ -135,6 +138,7 @@ class BookViewModel(
     }
 
     fun pauseAll() {
+        if(bookHashMap.isEmpty()) return
         Aria.download(this).stopAllTask()
         postEvent(BookEvent(bookHashMap.values.toList(), BookEventType.BOOK_PAUSED))
     }
@@ -149,6 +153,7 @@ class BookViewModel(
     }
 
     override fun onCleared() {
+        bookHashMap.values.forEach { it.unregister() }
         bookHashMap.clear()
         unregisterClass(this)
         super.onCleared()

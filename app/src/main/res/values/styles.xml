@@ -114,7 +114,14 @@
     <style name="CustomToolbarTextAppearance" parent="Widget.AppCompat.Toolbar">
         <item name="android:fontFamily">@font/open_sans_regular</item>
         <item name="android:textColor">?android:textColorPrimary</item>
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="CustomHeaderTextAppearance" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/open_sans_regular</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
+        <item name="android:textSize">18sp</item>
         <item name="textAllCaps">false</item>
     </style>
 

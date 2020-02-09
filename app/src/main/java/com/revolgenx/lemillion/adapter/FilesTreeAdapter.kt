@@ -3,30 +3,31 @@ package com.revolgenx.lemillion.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.github.axet.androidlibrary.widgets.ThemeUtils
-import com.github.axet.androidlibrary.widgets.TreeRecyclerView
 import com.github.axet.androidlibrary.widgets.TreeListView
+import com.github.axet.androidlibrary.widgets.TreeRecyclerView
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.adapter.meta.TorrentFile
 import com.revolgenx.lemillion.adapter.meta.TorrentFolder
+import com.revolgenx.lemillion.adapter.meta.TorrentName
 import com.revolgenx.lemillion.core.util.formatSize
 import kotlinx.android.synthetic.main.file_holder_adapter_layout.view.*
 import kotlinx.android.synthetic.main.folder_holder_adapter_layout.view.*
-import libtorrent.Libtorrent
+import org.libtorrent4j.Priority
+import org.libtorrent4j.TorrentHandle
 import java.io.File
-import com.revolgenx.lemillion.adapter.meta.TorrentName
 import java.util.*
 import kotlin.Comparator
-import kotlin.math.ceil
 
 
+//TODO://
 class FilesTreeAdapter(
-    private var handle: Long,
+    private var handle: TorrentHandle,
     private val totalCallback: ((total: String) -> Unit)? = null
-) :
-    TreeRecyclerView.TreeAdapter<FilesTreeAdapter.FileHolder>() {
+) : TreeRecyclerView.TreeAdapter<FilesTreeAdapter.FileHolder>() {
 
     var folders = mutableMapOf<String, TorrentFolder>()
+
+    private var receivedBytes: LongArray = longArrayOf()
 
     override fun getItemViewType(position: Int): Int {
         return if (getItem(position).nodes.isEmpty()) 0 else 1
@@ -43,6 +44,10 @@ class FilesTreeAdapter(
         )
     }
 
+    override fun getItemId(position: Int): Long {
+        return position.toLong()
+    }
+
     override fun onBindViewHolder(holder: FileHolder, position: Int) {
         val item = getItem(holder.getAdapterPosition(this))
         holder.bind(item)
@@ -51,77 +56,78 @@ class FilesTreeAdapter(
     inner class FileHolder(private val v: View) : TreeRecyclerView.TreeHolder(v) {
 
         fun bind(treenode: TreeListView.TreeNode) {
+
             val item = treenode.tag
             if (item is TorrentFolder) {
                 v.apply {
                     torrentFolderNameTv.text = item.name
+                    torrentFolderCheckBox.setOnCheckedChangeListener(null)
                     torrentFolderCheckBox.isChecked = item.check
                     torrentFolderSizeTv.text = item.size.formatSize()
-
                     torrentFolderCheckBox.setOnCheckedChangeListener { buttonView, isChecked ->
                         item.check = isChecked
-                        updateTotal()
+                        notifyDataSetChanged()
                     }
                     torrentFolderExpandIv.setImageResource(if (treenode.expanded) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down)
                 }
             } else if (item is TorrentFile) {
                 v.apply {
                     torrentFileNameTv.text = item.name
-                    torrentFileCheck.isChecked = item.check
-                    torrentFilePercentTv.text =
-                        if (item.file!!.length > 0) {
-                            (ceil(item.file!!.bytesCompleted * 100f / item.file!!.length)).toString() + "%"
-                        } else "100%"
+                    torrentFileCheck.setOnCheckedChangeListener(null)
+                    torrentFileCheck.isChecked = item.priority != Priority.IGNORE
+//                    torrentFilePercentTv.text =
+//                        if (item.file!!.length > 0) {
+//                            (item.file!!.bytesCompleted * 100f / item.file!!.length)).toString()+"%"
+//                        } else "100%"
 
                     torrentFileCheck.setOnCheckedChangeListener { buttonView, isChecked ->
-                        item.check = isChecked
-                        updateTotal()
+                        if (isChecked) {
+                            item.priority = Priority.DEFAULT
+                        } else {
+                            item.priority = Priority.IGNORE
+                        }
+                        notifyDataSetChanged()
                     }
 
                     torrentFileSizeTv.text = item.size.formatSize()
 
-                    if (item.parent == null) {
-                        setBackgroundColor(0)
-                    } else {
-                        setBackgroundColor(ThemeUtils.getColor(context, R.attr.fileBackgroundDark))
-                    }
+//                    if (item.parent == null) {
+//                        setBackgroundColor(0)
+//                    } else {
+//                        setBackgroundColor(ThemeUtils.getColor(context, R.attr.fileBackgroundDark))
+//                    }
                 }
             }
         }
     }
 
 
-    fun update() {
-        val count = Libtorrent.torrentFilesCount(handle)
-        val name = Libtorrent.torrentName(handle)
+    fun update(callback: () -> Unit) {
+        if (!handle.status().hasMetadata()) return
+
+        receivedBytes = handle.fileProgress(TorrentHandle.FileProgressFlags.PIECE_GRANULARITY)
+        val count = handle.torrentFile().numFiles()
+        val name = handle.name()
         if (root.nodes.size == 0 && count > 0) {
             root.nodes.clear()
             folders.clear()
-            if (count == 1L) {
+            if (count == 1) {
                 val f = TorrentFile(handle, 0)
-                f.name = "./" + f.file!!.path
                 val n = TreeListView.TreeNode(root, f)
                 f.node = n
                 root.nodes.add(n)
             } else {
                 for (i in 0 until count) {
                     val f = TorrentFile(handle, i)
-
-                    val p = f.file!!.getPath()
-                    f.fullPath = p
-                    val fp = p.substring(name.length + 1)
-                    f.path = fp
-                    val file = File(fp)
+                    val file = File(f.path)
                     val parent = file.parent
-                    f.name = "./" + file.name
 
                     if (parent != null) {
-                        var folder = folders.get(parent)
+                        var folder = folders[parent]
                         if (folder == null) {
-                            folder = TorrentFolder(handle)
-                            folder.fullPath = File(p).parent
+                            folder = TorrentFolder()
                             folder.path = parent
-                            folder.name = folder.path
+                            folder.name = folder.path!!
                             val n = TreeListView.TreeNode(root, folder)
                             folder.node = n
                             root.nodes.add(n)
@@ -149,27 +155,25 @@ class FilesTreeAdapter(
             }
         }
 
-        load()
-        updateTotal()
+        callback.invoke()
     }
 
 
     fun checkAll(checked: Boolean) {
-        if (handle == -1L) return
-
-        Libtorrent.torrentFilesCheckAll(handle, checked)
+        if (!handle.status().hasMetadata()) return
 
         for (n in root.nodes) {
             if (n.tag is TorrentFolder) {
                 val f = n.tag as TorrentFolder
-                for (k in f.node!!.nodes) {
-                    val m = k.tag as TorrentFile
-                    m.file!!.check = checked // update java side runtime data
-                }
+                f.check = checked
             }
             if (n.tag is TorrentFile) {
                 val f = n.tag as TorrentFile
-                f.file!!.check = checked // update java side runtime data
+                for (k in f.node!!.nodes) {
+                    val m = k.tag as TorrentFile
+                    m.priority =
+                        if (checked) Priority.DEFAULT else Priority.IGNORE
+                }
             }
         }
 
@@ -177,9 +181,14 @@ class FilesTreeAdapter(
         notifyDataSetChanged()
     }
 
-    private fun updateTotal() {
-        if (Libtorrent.metaTorrent(handle))
-            totalCallback?.invoke(Libtorrent.torrentPendingBytesLength(handle).formatSize())
+    fun updateTotal() {
+        totalCallback?.invoke(handle.torrentFile().files().totalSize().formatSize())
+    }
+
+    fun updateItems() {
+        if (!handle.status().hasMetadata() || !handle.isValid) return
+        receivedBytes = handle.fileProgress(TorrentHandle.FileProgressFlags.PIECE_GRANULARITY)
+        notifyDataSetChanged()
     }
 
 

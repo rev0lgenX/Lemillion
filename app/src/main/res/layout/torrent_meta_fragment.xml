@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollViewLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:orientation="vertical">
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentNameTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:descriptionDrawable="@drawable/ic_edit"
+            app:showDrawable="true"
+            app:titleName="@string/name" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentHashTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:descriptionDrawable="@drawable/ic_copy"
+            app:showDrawable="true"
+            app:titleName="@string/hash" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentPathTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/path" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentFileSizeTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/size" />
+
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentSeedersLeechersTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/seeders_leechers" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentPeersTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/peers" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentSpeedTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/speed" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentDownloadedUploadedTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/downloaded_uploaded" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentEtaTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/eta" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentPiecesTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/pieces" />
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentAddedTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/added" />
+
+
+        <com.revolgenx.lemillion.view.TitleTextView
+            android:id="@+id/torrentCreatedTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:titleName="@string/created" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

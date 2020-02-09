@@ -2,54 +2,54 @@ package com.revolgenx.lemillion.view
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
-import libtorrent.Libtorrent
-import kotlin.math.ceil
-import kotlin.math.sqrt
+import androidx.annotation.Nullable
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
+import com.revolgenx.lemillion.R
 
-
-class PiecesView(context: Context, attributeSet: AttributeSet?, defAttr: Int) :
-    View(context, attributeSet, defAttr) {
-
-    private var cells = 100
+class PiecesView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
+    View(context, attrs, defStyleAttr) {
+    private val empty: Paint = Paint()
+    private val complete: Paint = Paint()
+    private val partialPaint: Paint = Paint()
+    private var cells = 0
+    private var cellWidth = 0f
     private var mWidth = 0
     private var mHeight = 0
-    private var cellWidth = 0f
-    private var pieces = mutableListOf<Int>()
-    private var unpended = Paint()
-    private var empty = Paint()
-    private var checking = Paint()
-    private var partial = Paint()
-    private var complete = Paint()
-    private var writing = Paint()
-
-
-    val ALL = intArrayOf(
-        Libtorrent.PieceEmpty,
-        Libtorrent.PieceComplete,
-        Libtorrent.PieceChecking,
-        Libtorrent.PiecePartial,
-        Libtorrent.PieceWriting
-    )
+    private var cellPerPixel = 0f
+    private var hsl: FloatArray = floatArrayOf(197.0f, 0.991f, 0f)
+    private var pieces: BooleanArray = booleanArrayOf()
 
     constructor(context: Context) : this(context, null)
-    constructor(context: Context, attributeSet: AttributeSet?) : this(context, attributeSet, 0) {
-        unpended.color = -0x555556 // mid between LTGRAY - GRAY
-        empty.color = Color.parseColor("#bdbdbd")
-        checking.color = Color.parseColor("#d4e157")
-        partial.color = Color.parseColor("#9ccc65")
-        writing.color = Color.parseColor("#4caf50")
-        complete.color = Color.parseColor("#455a64")
+    constructor(context: Context, @Nullable attrs: AttributeSet?) : this(context, attrs, 0) {
+        empty.color = ContextCompat.getColor(context, R.color.empty_piece)
+        complete.color = ContextCompat.getColor(context, R.color.complete_piece)
 
-//        if (isInEditMode) {
-//            for (i in 0 until cells * cells - 10) {
-//                val s = ALL[(Math.random() * ALL.totalSize).toInt()]
-//                pieces.add(s)
-//            }
-//        }
+        if (isInEditMode) {
+            val list = listOf(true, false)
+            pieces = BooleanArray(1000)
+            for (i in 0 until 1000) {
+                pieces[i] = list.random()
+            }
+            cells = pieces.size
+        }
+    }
+
+
+    fun drawPieces(pieces: BooleanArray) {
+        if (pieces.isEmpty()) {
+            return
+        }
+        this.pieces = pieces
+        cells = pieces.size
+        if (cells == pieces.size) {
+            postInvalidate()
+        } else {
+            requestLayout()
+        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -59,44 +59,35 @@ class PiecesView(context: Context, attributeSet: AttributeSet?, defAttr: Int) :
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec)
     }
 
-    override fun onDraw(canvas: Canvas?) {
-        var paint: Paint = empty
-
-        if(pieces.isEmpty()) return
-
-        cellWidth = mWidth / cells.toFloat()
-        for ((pos, i) in (0 until cells).withIndex()) {
-            when (pieces[pos]) {
-                Libtorrent.PieceWriting -> paint = writing
-                Libtorrent.PiecePartial -> paint = partial
-                Libtorrent.PieceChecking -> paint = checking
-                Libtorrent.PieceComplete -> paint = complete
-                Libtorrent.PieceUnpended -> paint = unpended
-                Libtorrent.PieceEmpty -> paint = empty
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        if (cells <= mWidth) {
+            cellWidth = mWidth / cells.toFloat()
+            for (i in 0 until cells) {
+                val paint: Paint = if (pieces[i]) complete else empty
+                val left = i * cellWidth
+                val right = left + cellWidth
+                canvas.drawRect(
+                    left, 0.0f,
+                    right, mHeight.toFloat(), paint
+                )
             }
-
-            val left = i.toFloat() * cellWidth
-            val right = left + cellWidth
-            val bottom = height.toFloat()
-            canvas!!.drawRect(left, 0.0f, right, bottom, paint)
+        } else {
+            cellPerPixel = cells / mWidth.toFloat()
+            for (i in 0 until mWidth) {
+                val beginPiece = (cellPerPixel * i).toInt()
+                val endPiece = (beginPiece + cellPerPixel).toInt()
+                var pieceSum = 0
+                for (piecePosition in beginPiece until endPiece) {
+                    if (pieces[piecePosition]) pieceSum++
+                }
+                hsl[2] = (0.447f + 0.553 * (0.98 - pieceSum / cellPerPixel)).toFloat()
+                partialPaint.color = ColorUtils.HSLToColor(hsl)
+                canvas.drawRect(
+                    i.toFloat(), 0.0f,
+                    mWidth.toFloat(), mHeight.toFloat(), partialPaint
+                )
+            }
         }
     }
-
-
-    fun drawPieces(handle: Long) {
-        if (handle == -1L) return
-        if (!Libtorrent.metaTorrent(handle)) return
-
-        var length = Libtorrent.torrentPiecesCount(handle)
-        cells = ceil(sqrt(length.toDouble())).toInt()
-        pieces.clear()
-        length = Libtorrent.torrentPiecesCompactCount(handle, 1)
-
-        for (i in 0 until length)
-            pieces.add(Libtorrent.torrentPiecesCompact(handle, i))
-
-        invalidate()
-    }
-
-
 }

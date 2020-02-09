@@ -5,12 +5,14 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.core.net.toFile
 import androidx.core.os.bundleOf
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.afollestad.materialdialogs.MaterialDialog
@@ -21,44 +23,55 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.adapter.FilesTreeAdapter
+import com.revolgenx.lemillion.core.exception.MagnetLoadException
 import com.revolgenx.lemillion.core.preference.storagePath
+import com.revolgenx.lemillion.core.torrent.Torrent
+import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.event.TorrentAddedEvent
 import com.revolgenx.lemillion.event.TorrentAddedEventTypes
 import kotlinx.android.synthetic.main.add_torrent_bottom_sheet_layout.*
 import kotlinx.android.synthetic.main.torrent_file_header_layout.view.*
-import libtorrent.Libtorrent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
+import org.libtorrent4j.AlertListener
+import org.libtorrent4j.TorrentHandle
+import org.libtorrent4j.TorrentInfo
+import org.libtorrent4j.alerts.Alert
+import org.libtorrent4j.alerts.AlertType
+import timber.log.Timber
+import java.io.File
+import java.lang.Exception
+import kotlin.coroutines.CoroutineContext
 
 
 //TODO:CHECK STORAGE
-class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
+class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, CoroutineScope {
 
     companion object {
-        fun newInstance(t: Long) = AddTorrentBottomSheetDialog().apply {
-            arguments = bundleOf(torrentHandleKey to t)
+        fun newInstance(uri: Uri) = AddTorrentBottomSheetDialog().apply {
+            arguments = bundleOf(uriKey to uri)
         }
     }
 
-    private val torrentHandleKey = "torrent_handle_key"
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+    private val uriKey = "torrent_hash_key"
     private val torrentPathKey = "torrent_path_key"
-    private var handle = -1L
-    private var hash = ""
+    private var handle: TorrentHandle? = null
     private var torrentName = ""
     private var path = ""
     private lateinit var adapter: FilesTreeAdapter
     private lateinit var headerLayout: View
     private val handler = Handler()
-    private val runnable = object : Runnable {
-        override fun run() {
-            if (handle == -1L) return
-            if (Libtorrent.metaTorrent(handle)) {
-                downloadMetadataTv.visibility = View.GONE
-                updateView()
-                return
-            }
+    private val engine by inject<TorrentEngine>()
 
-            handler.postDelayed(this, 1000L)
-        }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
     }
 
     override fun onCreateView(
@@ -80,7 +93,12 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
 
         dialog.setOnShowListener { t ->
             (t as BottomSheetDialog).findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)
-                ?.let { BottomSheetBehavior.from(it).state = BottomSheetBehavior.STATE_EXPANDED }
+                ?.let {
+                    BottomSheetBehavior.from(it).let { bh ->
+                        bh.isHideable = false
+                        bh.state = BottomSheetBehavior.STATE_EXPANDED
+                    }
+                }
         }
 
         dialog.setCanceledOnTouchOutside(false)
@@ -89,13 +107,55 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        handle = arguments?.getLong(torrentHandleKey) ?: -1
+        val uri = arguments?.getParcelable<Uri>(uriKey) ?: return
 
         addListener()
 
-        if (handle == -1L) return
+        path = if (savedInstanceState == null) {
+            storagePath(context!!)!!
+        } else {
+            savedInstanceState.getString(torrentPathKey)!!
+        }
 
-        adapter = FilesTreeAdapter(handle) {
+        when (uri.scheme) {
+            FILE_PREFIX -> {
+                try {
+                    handle =
+                        engine.loadTorrent(TorrentInfo(uri.toFile()), File(path), null, null, null)
+                } catch (e: Exception) {
+                    context!!.showErrorDialog(e.message ?: "error")
+                    dismiss()
+                    return
+                }
+            }
+
+            MAGNET_PREFIX -> {
+                try {
+                    handle = engine.fetchMagnet(uri.toString())
+                } catch (e: MagnetLoadException) {
+                    context!!.showErrorDialog(e.message ?: "error")
+                    dismiss()
+                    return
+                } catch (e: Exception) {
+                    context!!.showErrorDialog(e.message ?: "error")
+                    dismiss()
+                    return
+                }
+                showFetchingMetaData(true)
+            }
+
+            CONTENT_PREFIX->{
+
+            }
+            else->{
+                context!!.showErrorDialog(getString(R.string.unknown_scheme))
+                dismiss()
+            }
+        }
+
+        if (handle == null) return
+
+        adapter = FilesTreeAdapter(handle!!) {
             headerLayout.torrentMetaTotalSizeTv.text = it
         }
 
@@ -106,37 +166,52 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
         headerRecyclerAdapter.setHeaderView(headerLayout)
         treeRecyclerView.adapter = headerRecyclerAdapter
 
-        path = if (savedInstanceState == null) {
-            storagePath(context!!)!!
-        } else {
-            savedInstanceState.getString(torrentPathKey)!!
-        }
 
         updateView()
     }
 
+
+    private fun showFetchingMetaData(b: Boolean) {
+        if (b) {
+            downloadMetadataTv.visibility = View.VISIBLE
+            downloadMetadataTv.showProgress(R.string.downloading_meta, b)
+        } else {
+            downloadMetadataTv.visibility = View.GONE
+        }
+    }
+
     private fun addListener() {
+
+        engine.addListener(this)
+
         addTorrentOkTv.setOnClickListener {
 
-            if (handle == -1L) {
+            if (handle == null) {
                 dismiss()
                 return@setOnClickListener
             }
 
             postEvent(
                 TorrentAddedEvent(
-                    handle,
-                    torrentMetaHashTv.description,
-                    torrentPathMetaTv.description,
+                    Torrent().also {
+                        it.path = torrentPathMetaTv.description
+                        it.hash = torrentMetaHashTv.description
+                        it.handle = handle
+                        if (handle!!.status().hasMetadata()) {
+                            it.magnet = handle!!.makeMagnetUri()
+                            it.source = handle!!.torrentFile().bencode()!!
+                        } else {
+                            it.magnet = arguments?.getParcelable<Uri>(uriKey).toString()
+                        }
+                    },
                     TorrentAddedEventTypes.TORRENT_ADDED
                 )
             )
-
             dismiss()
         }
 
         addTorrentCancelTv.setOnClickListener {
-            if (handle == -1L) {
+            if (handle == null) {
                 dismiss()
                 return@setOnClickListener
             }
@@ -146,7 +221,7 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
 
         torrentMetaNameTv.setDrawableClickListener {
             context!!.showInputDialog(titleRes = R.string.name, prefill = torrentName) {
-                Libtorrent.torrentSetName(handle, it)
+                handle!!.torrentFile().files().name(it)
             }
             updateView()
         }
@@ -166,61 +241,68 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
         torrentPathMetaTv.setDrawableClickListener {
             MaterialDialog(this.context!!).show {
                 folderChooser(allowFolderCreation = true) { dialog, file ->
-                    val buf = Libtorrent.getTorrent(handle)
-                    Libtorrent.removeTorrent(handle)
-                    handle = Libtorrent.addTorrentFromBytes(file.path, buf)
-                    if (handle != -1L) {
-                        path = file.path
-                        arguments = bundleOf(torrentHandleKey to handle)
-                        updateView()
-                    } else {
-                        context.showErrorDialog(Libtorrent.error())
-                    }
+                    handle!!.moveStorage(file.path)
                 }
-
                 negativeButton(R.string.cancel)
             }
         }
 
         headerLayout.torrentMetaFileCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            if (Libtorrent.metaTorrent(handle))
-                adapter.checkAll(isChecked)
+            adapter.checkAll(isChecked)
         }
 
-        downloadMetadataTv.setOnClickListener {
-            downloadMetadataTv.isEnabled = false
-            Libtorrent.downloadMetadata(handle)
-            downloadMetadataTv.showProgress(R.string.downloading, true)
-            handler.postDelayed(runnable, 1000L)
-        }
-
+        showFetchingMetaData(true)
 
     }
 
 
-    private fun updateView() {
-        if (handle == -1L) return
+    override fun alert(alert: Alert<*>?) {
+        CoroutineScope(Dispatchers.Main).launch {
+            if (alert == null) return@launch
+            when (alert.type()) {
+                AlertType.METADATA_RECEIVED -> {
+                    showFetchingMetaData(false)
+                    updateView()
+                }
+                AlertType.METADATA_FAILED -> {
+                    downloadMetadataTv?.showProgress(R.string.failed, false)
+                }
+                else -> {
+                    Timber.d(alert.type().name)
+                }
+            }
+        }
+    }
 
-        hash = Libtorrent.torrentHash(handle)
-        torrentName = Libtorrent.torrentName(handle).takeIf { it.isNotEmpty() } ?: hash
+    override fun types(): IntArray =
+        intArrayOf(AlertType.METADATA_RECEIVED.swig(), AlertType.METADATA_FAILED.swig())
+
+
+    private fun updateView() {
+        if (handle == null) return
+
+        val hash = handle!!.infoHash().toHex()
+        torrentName = handle!!.name()
 
         torrentMetaNameTv.description = torrentName
         torrentMetaHashTv.description = hash
         torrentPathMetaTv.description = path
 
-        if (Libtorrent.metaTorrent(handle)) {
+        if (handle!!.status().hasMetadata()) {
             torrentMetaNameTv.showDrawable(true)
             headerLayout.torrentMetaTotalSizeTv.text =
-                Libtorrent.torrentPendingBytesLength(handle).formatSize()
+                handle!!.torrentFile().totalSize().formatSize()
 
+            /*      headerLayout.torrentMetaTotalSizeTv.text =
+                Libtorrent.torrentPendingBytesLength(handle).formatSize()
+*/
             headerLayout.emptyTv.visibility = View.GONE
             downloadMetadataTv.visibility = View.GONE
             torrentPiecesTv.description =
-                Libtorrent.torrentPiecesCount(handle).toString() + "/" + Libtorrent.torrentPieceLength(
-                    handle
-                ).formatSize()
-            piecesView.drawPieces(handle)
-            torrentSizeTv.description = Libtorrent.torrentBytesLength(handle).formatSize()
+                handle!!.torrentFile().numPieces().toString() + "/" + handle!!.torrentFile().pieceLength().toLong().formatSize()
+
+//            piecesView.drawPieces(handle)
+            torrentSizeTv.description = handle!!.torrentFile().totalSize().formatSize()
         } else {
             downloadMetadataTv.visibility = View.VISIBLE
             torrentPiecesTv.description = "0"
@@ -228,8 +310,17 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
             torrentMetaNameTv.showDrawable(false)
         }
 
-        adapter.update()
+
+        launch(Dispatchers.IO) {
+            adapter.update {
+                launch(Dispatchers.Main) {
+                    adapter.load()
+                    adapter.updateTotal()
+                }
+            }
+        }
     }
+
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(torrentPathKey, path)
@@ -239,12 +330,15 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment() {
 
     override fun onCancel(dialog: DialogInterface) {
         super.onCancel(dialog)
-        if (handle == -1L) return
-        Libtorrent.removeTorrent(handle)
+        if (handle == null) return
+        engine.cancelFetchMagnet(handle!!.infoHash().toHex())
     }
 
     override fun onDestroy() {
+        job.cancel()
         handler.removeCallbacksAndMessages(null)
+        engine.removeListener(this)
         super.onDestroy()
     }
+
 }

@@ -39,7 +39,7 @@ object KEY {
 fun Context.sharedPreference() = PreferenceManager.getDefaultSharedPreferences(this)
 
 fun storagePath(context: Context) =
-    context.sharedPreference().getString(KEY.STORAGE_KEY, DEFAULT.DEFAULT_STORAGE)
+    context.sharedPreference().getString(STORAGE_KEY, DEFAULT.DEFAULT_STORAGE)
 
 fun setStoragePath(context: Context, path:String) = context.putPrefString(STORAGE_KEY, path)
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -10,7 +10,7 @@
         android:id="@+id/addTorrentAppbarLayout"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_alignParentTop="true">
 
         <TextView
             android:layout_width="match_parent"
@@ -29,9 +29,11 @@
     <androidx.core.widget.NestedScrollView
         android:id="@+id/addTorrentNestedLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/addTorrentAppbarLayout">
+        android:layout_below="@id/addTorrentAppbarLayout"
+        android:layout_above="@+id/torrentDismissLayout"
+        android:overScrollMode="never">
 
         <LinearLayout
             android:id="@+id/addTorrentLinearLayout"
@@ -84,14 +86,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                app:titleName="@string/pieces"/>
+                app:titleName="@string/pieces" />
 
-            <com.revolgenx.lemillion.view.PiecesView
-                android:id="@+id/piecesView"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="10dp"
-                android:background="@color/gray"/>
+            <!--            <com.revolgenx.lemillion.view.PiecesView-->
+            <!--                android:id="@+id/piecesView"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="50dp"-->
+            <!--                android:layout_marginTop="10dp"-->
+            <!--                android:background="@color/gray"/>-->
 
             <TextView
                 android:layout_width="match_parent"
@@ -106,7 +108,8 @@
             <com.github.axet.androidlibrary.widgets.TreeRecyclerView
                 android:id="@+id/treeRecyclerView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="match_parent"
+                android:nestedScrollingEnabled="true"/>
 
         </LinearLayout>
 
@@ -116,9 +119,7 @@
         android:id="@+id/torrentDismissLayout"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/addTorrentNestedLayout"
-        app:layout_constraintVertical_bias="0">
+        android:layout_alignParentBottom="true">
 
 
         <TextView
@@ -168,4 +169,4 @@
             android:textSize="14sp" />
     </RelativeLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

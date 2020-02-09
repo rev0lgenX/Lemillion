@@ -14,6 +14,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
+        android:requestLegacyExternalStorage="true"
         android:name="com.revolgenx.lemillion.app.App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -23,7 +24,7 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning"
-        tools:targetApi="m">
+        tools:targetApi="q">
         <activity android:name="com.revolgenx.lemillion.activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1115,6 +1116,7 @@
             </intent-filter>
 
         </activity>
+        <activity android:name="com.revolgenx.lemillion.activity.TorrentMetaActivity" />
 
         <service android:name="com.revolgenx.lemillion.core.service.MainService" />
     </application>

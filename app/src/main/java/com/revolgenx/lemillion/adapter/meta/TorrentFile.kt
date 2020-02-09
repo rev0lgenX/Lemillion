@@ -1,31 +1,29 @@
 package com.revolgenx.lemillion.adapter.meta
 
 import com.github.axet.androidlibrary.widgets.TreeListView
-import libtorrent.Libtorrent
+import org.libtorrent4j.Priority
+import org.libtorrent4j.TorrentHandle
 
-class TorrentFile(t: Long, i: Long) : TorrentName() {
+//TODO://
+class TorrentFile(var handle: TorrentHandle, var index: Int) : TorrentName() {
 
     var parent: TorrentFolder? = null
-    var index: Long? = null
-    var file: libtorrent.File? = null
-    var handle: Long = -1
     var node: TreeListView.TreeNode? = null
-    var check = true
+
+    var priority: Priority? = null
         set(value) {
+            if (value == null) return
             field = value
-            Libtorrent.torrentFilesCheck(handle, index!!, value)
-            file!!.check = value
+            handle.filePriority(index, value)
         }
-        get() = file!!.check
 
     init {
-        handle = t
-        index = i
-        update()
-        size = file!!.length
-    }
+        handle.torrentFile().files()?.let {
+            name = it.fileName(index)
+            size = it.fileSize(index)
+            path = it.filePath(index)
+            priority = handle.filePriority(index)
+        }
 
-    fun update() {
-        file = Libtorrent.torrentFiles(handle, index!!)
     }
 }

@@ -1,12 +1,28 @@
 package com.revolgenx.lemillion.core.book
 
+import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
+import com.arialyy.annotations.Download
 import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.download.DownloadEntity
+import com.arialyy.aria.core.inf.IEntity
+import com.arialyy.aria.core.task.DownloadTask
+import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.core.db.book.BookEntity
+import com.revolgenx.lemillion.core.util.postEvent
+import com.revolgenx.lemillion.event.BookEvent
+import com.revolgenx.lemillion.event.BookEventType
+import java.lang.Exception
+
+
+typealias BookProgressListener = (() -> Unit)?
 
 class Book() : Parcelable {
+
+    init {
+        Aria.download(this).register()
+    }
 
     constructor(parcel: Parcel) : this() {
         id = parcel.readLong()
@@ -20,11 +36,13 @@ class Book() : Parcelable {
         }
     }
 
-
     var id: Long = -1
     var entity: DownloadEntity? = null
-    var listener: (() -> Unit)? = null
+    var listeners: MutableList<BookProgressListener> = mutableListOf()
     var bookProtocol = BookProtocol.UNKNOWN
+
+    var hasError: Boolean = false
+    var errorMsg: String = ""
 
     val name: String
         get() = entity!!.fileName
@@ -32,17 +50,65 @@ class Book() : Parcelable {
     val totalSize: Long
         get() = entity!!.fileSize
 
-    val totalSizeFormatted: String
-        get() = entity!!.convertFileSize
-
     val progress: Long
         get() = entity!!.currentProgress
 
     val stopTime: Long
         get() = entity!!.stopTime
 
+    val state
+        get() = entity!!.state
+
+    val speed: Long
+        get() = entity!!.speed
+
+    fun stateFormat(context: Context) = when (entity!!.state) {
+        IEntity.STATE_RUNNING -> {
+            context.getString(R.string.downloading)
+        }
+        IEntity.STATE_CANCEL -> {
+            context.getString(R.string.canceled)
+        }
+        IEntity.STATE_COMPLETE -> {
+            context.getString(R.string.completed)
+        }
+        IEntity.STATE_FAIL -> {
+            context.getString(R.string.failed)
+        }
+        IEntity.STATE_OTHER -> {
+            context.getString(R.string.unknown)
+        }
+        IEntity.STATE_STOP -> {
+            context.getString(R.string.paused)
+        }
+        IEntity.STATE_PRE -> {
+            context.getString(R.string.connecting)
+        }
+
+        IEntity.STATE_POST_PRE -> {
+            context.getString(R.string.connecting)
+        }
+        IEntity.STATE_WAIT -> {
+            context.getString(R.string.waiting)
+        }
+        else -> ""
+    }
+
+    val eta: Long
+        get() {
+            return entity!!.timeLeft.toLong()
+        }
 
     fun resume() {
+
+
+        hasError = false
+        errorMsg = ""
+        if (state == IEntity.STATE_FAIL) {
+            reTry()
+            return
+        }
+
         when (bookProtocol) {
             BookProtocol.HTTP -> {
                 Aria.download(this).load(id).resume()
@@ -68,6 +134,39 @@ class Book() : Parcelable {
         }
     }
 
+    fun reStart() {
+        when (bookProtocol) {
+            BookProtocol.HTTP -> {
+                Aria.download(this).load(id).resume(true)
+            }
+            BookProtocol.FTP -> {
+                Aria.download(this).loadFtp(id).resume(true)
+            }
+            BookProtocol.UNKNOWN -> {
+            }
+        }
+    }
+
+    fun reTry() {
+        when (bookProtocol) {
+            BookProtocol.HTTP -> {
+                Aria.download(this).load(id).reTry()
+            }
+            BookProtocol.FTP -> {
+                Aria.download(this).loadFtp(id).reTry()
+            }
+            BookProtocol.UNKNOWN -> {
+            }
+        }
+    }
+
+    fun isPaused(): Boolean {
+        return when (state) {
+            IEntity.STATE_RUNNING, IEntity.STATE_WAIT, IEntity.STATE_PRE, IEntity.STATE_POST_PRE -> false
+            else -> true
+        }
+    }
+
     fun remove(withFiles: Boolean = false) {
         when (bookProtocol) {
             BookProtocol.HTTP -> {
@@ -82,17 +181,115 @@ class Book() : Parcelable {
     }
 
 
+    @Download.onWait
+    fun onWait(task: DownloadTask?) {
+        if (!checkTaskValidity(task)) return
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_RESUMED))
+        update(task)
+    }
+
+    private fun checkTaskValidity(task: DownloadTask?) = task != null && task.entity?.id == id
+
+    @Download.onPre
+    fun onPre(task: DownloadTask?) {
+        if (!checkTaskValidity(task)) return
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_RESUMED))
+        update(task)
+    }
+
+    @Download.onTaskStart
+    fun taskStart(task: DownloadTask?) {
+        if (!checkTaskValidity(task)) return
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_RESUMED))
+        update(task)
+    }
+
+    @Download.onTaskRunning
+    fun running(task: DownloadTask?) {
+        if(!checkTaskValidity(task)) return
+        update(task)
+    }
+
+    @Download.onTaskResume
+    fun taskResume(task: DownloadTask?) {
+        if(!checkTaskValidity(task)) return
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_RESUMED))
+        update(task)
+    }
+
+    @Download.onTaskStop
+    fun taskStop(task: DownloadTask?) {
+        if(!checkTaskValidity(task)) return
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_PAUSED))
+        update(task)
+    }
+
+    @Download.onTaskCancel
+    fun taskCancel(task: DownloadTask?) {
+        if(!checkTaskValidity(task)) return
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_PAUSED))
+        update(task)
+    }
+
+    @Download.onTaskFail
+    fun taskFail(task: DownloadTask?, e: Exception?) {
+        if(!checkTaskValidity(task)) return
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_FAILED))
+
+        hasError = true
+        if (e != null) {
+            errorMsg = e.message ?: "Error"
+        }
+        update(task)
+    }
+
+
+    @Download.onTaskComplete
+    fun taskComplete(task: DownloadTask?) {
+        if(!checkTaskValidity(task)) return
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_COMPLETED))
+        update(task)
+    }
+
+    fun update(task: DownloadTask?) {
+        if (task != null) {
+            this.entity = task.entity
+        }
+        listeners.forEach { it?.invoke() }
+    }
+
+    fun addListener(listener: BookProgressListener) {
+        listeners.add(listener)
+    }
+
+    fun removeListener(listener: BookProgressListener) {
+        listeners.remove(listener)
+    }
+
+    fun removeAllListener() {
+        listeners.clear()
+    }
+
+    fun register() {
+        Aria.download(this).register()
+    }
+
+    fun unregister() {
+        Aria.download(this).unRegister()
+    }
+
+
+    fun toEntity() = BookEntity(id, bookProtocol, hasError, errorMsg)
+
     override fun equals(other: Any?): Boolean {
         return if (other is Book) {
             entity!!.id == other.entity!!.id
                     && entity!!.fileName == other.entity!!.fileName
                     && entity!!.state == other.entity!!.state
                     && entity!!.percent == other.entity!!.percent
-                    && entity!!.convertSpeed == other.entity!!.convertSpeed
+                    && entity!!.speed == other.entity!!.speed
         } else false
     }
-
-    fun toEntity() = BookEntity(id, bookProtocol)
 
 
     override fun describeContents(): Int = 0

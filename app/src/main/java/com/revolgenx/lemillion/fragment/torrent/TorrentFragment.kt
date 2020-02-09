@@ -1,5 +1,8 @@
 package com.revolgenx.lemillion.fragment.torrent
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.*
@@ -15,16 +18,15 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.checkbox.checkBoxPrompt
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.activity.MainActivity
+import com.revolgenx.lemillion.activity.TorrentMetaActivity
 import com.revolgenx.lemillion.adapter.SelectableAdapter
 import com.revolgenx.lemillion.core.service.isServiceRunning
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSortingComparator
 import com.revolgenx.lemillion.core.torrent.Torrent
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.torrent.TorrentProgressListener
-import com.revolgenx.lemillion.core.torrent.TorrentStatus
-import com.revolgenx.lemillion.core.torrent.TorrentStatus.*
+import com.revolgenx.lemillion.core.torrent.TorrentState
 import com.revolgenx.lemillion.core.util.*
-import com.revolgenx.lemillion.dialog.TorrentMetaBottomSheetDialog
 import com.revolgenx.lemillion.event.*
 import com.revolgenx.lemillion.fragment.BaseRecyclerFragment
 import com.revolgenx.lemillion.viewmodel.TorrentViewModel
@@ -34,6 +36,8 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import kotlin.Comparator
+
 
 class TorrentFragment :
     BaseRecyclerFragment<TorrentFragment.TorrentRecyclerAdapter.TorrentViewHolder, Torrent>() {
@@ -148,6 +152,7 @@ class TorrentFragment :
 
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         registerClass(this)
@@ -189,7 +194,7 @@ class TorrentFragment :
             }
         })
 
-        torrentEngine.startEngine()
+        torrentEngine.start()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -208,13 +213,18 @@ class TorrentFragment :
                 progressText?.visibility = View.GONE
                 viewModel.getAllTorrents()
             }
-            TorrentEngineEventTypes.ENGINE_STOPPED -> {
+            TorrentEngineEventTypes.ENGINE_STOPPING -> {
                 progressText?.visibility = View.VISIBLE
-                progressText?.showProgress(R.string.engine_stopped, false)
+                progressText?.showProgress(R.string.engine_stopping, false)
+                viewModel.removeAllTorrentEngineListener()
             }
             TorrentEngineEventTypes.ENGINE_FAULT -> {
                 progressText?.showProgress(R.string.unable_to_start_engine)
                 makeToast(getString(R.string.unable_to_start_engine))
+            }
+            TorrentEngineEventTypes.ENGINE_STOPPED -> {
+                progressText?.visibility = View.VISIBLE
+                progressText?.showProgress(R.string.engine_stopped, false)
             }
         }
     }
@@ -222,9 +232,9 @@ class TorrentFragment :
 
     override fun onDestroy() {
         if (!rotating && !context!!.isServiceRunning()) {
-            torrentEngine.stopEngine()
+            torrentEngine.stop()
         }
-        adapter.currentList.forEach { it.torrentProgressListener = null }
+        adapter.currentList.forEach { it.removeAllListener() }
         unregisterClass(this)
         super.onDestroy()
     }
@@ -310,33 +320,18 @@ class TorrentFragment :
         inner class TorrentViewHolder(private val v: View) : RecyclerView.ViewHolder(v),
             TorrentProgressListener {
             private var torrent: Torrent? = null
-            private var currentStatus: TorrentStatus = UNKNOWN
+            private var currentState: TorrentState = TorrentState.UNKNOWN
+
             fun bind(item: Torrent) {
                 torrent = item
-                torrent!!.torrentProgressListener = this
+                torrent!!.addListener(this)
                 v.apply {
                     torrentAdapterConstraintLayout.isSelected = isSelected(adapterPosition)
-
                     pausePlayIv.setOnClickListener {
-                        when (torrent!!.status) {
-                            QUEUE, SEEDING, DOWNLOADING, CHECKING -> {
-                                torrent!!.stop()
-                                postEvent(
-                                    TorrentEvent(
-                                        listOf(torrent!!),
-                                        TorrentEventType.TORRENT_PAUSED
-                                    )
-                                )
-                            }
-                            else -> {
-                                torrent!!.start()
-                                postEvent(
-                                    TorrentEvent(
-                                        listOf(torrent!!),
-                                        TorrentEventType.TORRENT_RESUMED
-                                    )
-                                )
-                            }
+                        if (torrent!!.isPausedWithState()) {
+                            torrent!!.start()
+                        } else {
+                            torrent!!.stop()
                         }
                     }
 
@@ -352,7 +347,10 @@ class TorrentFragment :
                                 return@setOnClickListener
                             }
                         }
-                        TorrentMetaBottomSheetDialog.newInstance(torrent!!).show(fragmentManager!!, "torrent_meta_dialog")
+
+                        startActivity(Intent(context, TorrentMetaActivity::class.java).apply {
+                            putExtra(TorrentMetaActivity.torrentKey, torrent!!)
+                        })
                     }
 
                     setOnLongClickListener {
@@ -372,6 +370,7 @@ class TorrentFragment :
                 updateView()
             }
 
+            @SuppressLint("SetTextI18n")
             private fun updateView() {
                 v.apply {
                     torrentNameTv.text = torrent!!.name
@@ -379,41 +378,79 @@ class TorrentFragment :
                     torrentProgressBar.progress = progress
                     torrentProgressBar.labelText = progress.toInt().toString()
 
-                    val status = torrent!!.status
-                    if (currentStatus == status) return
+                    if (torrent!!.hasError) {
+                        indicatorView.setBackgroundColor(color(R.color.errorColor))
+                    }
+                    val state = torrent!!.state
+                    torrentFirstTv.text =
+                        "${torrent!!.state.name} · S:${torrent!!.connectedSeeders()} · L:${torrent!!.connectedLeechers()}${
+                        if (state == TorrentState.DOWNLOADING) {
+                            " · ET: ${torrent!!.eta().formatRemainingTime()}"
+                        } else ""}"
 
-                    currentStatus = status
+                    torrentSecondTv.text =
+                        if (state == TorrentState.COMPLETED || state == TorrentState.SEEDING) {
+                            "${torrent!!.totalCompleted.formatSize()}/${torrent!!.totalSize.formatSize()} · " +
+                                    "↑ ${torrent!!.uploadSpeed.formatSpeed()}"
+                        } else
+                            "${torrent!!.totalCompleted.formatSize()}/${torrent!!.totalSize.formatSize()} · " +
+                                    "↓ ${torrent!!.downloadSpeed.formatSpeed()} · ↑ ${torrent!!.uploadSpeed.formatSpeed()}"
 
-                    if (torrent!!.completed && status != SEEDING) {
-                        torrentFirstTv.text = getString(R.string.completed)
-                    } else
-                        torrentFirstTv.text = status.name
+                    if (currentState == state) return
 
-                    pausePlayIv.setImageResource(
-                        when (status) {
-                            QUEUE, SEEDING, DOWNLOADING, CHECKING -> {
-                                R.drawable.ic_pause
+                    currentState = state
+
+                    indicatorView.setBackgroundColor(
+                        when (currentState) {
+                            TorrentState.PAUSED -> {
+                                color(R.color.pausedColor)
                             }
-                            else -> {
-                                R.drawable.ic_play
+                            TorrentState.UNKNOWN -> {
+                                color(R.color.red)
+                            }
+
+                            TorrentState.DOWNLOADING
+                                , TorrentState.CHECKING
+                                , TorrentState.QUEUE
+                                , TorrentState.CHECKING_FILES
+                                , TorrentState.DOWNLOADING_METADATA
+                                , TorrentState.ALLOCATING
+                                , TorrentState.CHECKING_RESUME_DATA -> {
+                                color(R.color.downloadingColor)
+                            }
+
+                            TorrentState.SEEDING -> {
+                                color(R.color.seedingColor)
+                            }
+                            TorrentState.COMPLETED -> {
+                                color(R.color.completedColor)
                             }
                         }
                     )
+
+                    pausePlayIv.setImageResource(
+                        if (torrent!!.isPausedWithState()) {
+                            R.drawable.ic_play
+                        } else {
+                            R.drawable.ic_pause
+                        }
+                    )
+
                 }
             }
 
-            override fun invoke(torrent: Torrent) {
+            override fun invoke() {
                 updateView()
             }
 
 
             fun unbind() {
-                torrent!!.torrentProgressListener = null
-                currentStatus = UNKNOWN
+                torrent!!.removeListener(this)
                 torrent = null
             }
         }
     }
 
+    override fun getTitle(context: Context): String = context.getString(R.string.torrent)
 
 }

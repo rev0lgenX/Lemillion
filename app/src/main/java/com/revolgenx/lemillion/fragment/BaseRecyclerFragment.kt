@@ -5,7 +5,6 @@ import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,10 +13,11 @@ import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.adapter.SelectableAdapter
 import kotlinx.android.synthetic.main.base_recycler_view_layout.*
 
-abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Fragment() {
+abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : BasePagerFragment() {
 
     protected lateinit var adapter: SelectableAdapter<VH, T>
     private val recyclerStateKey = "recycler_state_key"
+    protected lateinit var mBaseRecyclerView: RecyclerView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,6 +29,7 @@ abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Fra
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        mBaseRecyclerView = baseRecyclerView
         baseRecyclerView.layoutManager = LinearLayoutManager(this.context)
         baseRecyclerView.addItemDecoration(
             DividerItemDecoration(
@@ -54,14 +55,14 @@ abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Fra
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putParcelable(
             recyclerStateKey,
-            baseRecyclerView.layoutManager?.onSaveInstanceState()
+            mBaseRecyclerView.layoutManager?.onSaveInstanceState()
         )
         super.onSaveInstanceState(outState)
     }
 
     abstract fun resumeAll()
     abstract fun pauseAll()
-    abstract fun search(query:String)
-    abstract fun sort(comparator:Comparator<*>)
+    abstract fun search(query: String)
+    abstract fun sort(comparator: Comparator<*>)
 
 }

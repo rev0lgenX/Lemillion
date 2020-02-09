@@ -1,12 +1,12 @@
 package com.revolgenx.lemillion.core.db.converter
 
 import androidx.room.TypeConverter
-import com.revolgenx.lemillion.core.torrent.TorrentStatus
+import com.revolgenx.lemillion.core.torrent.TorrentState
 
 class TorrentStatusConverter {
     @TypeConverter
-    fun fromStatus(value: TorrentStatus) = value.ordinal
+    fun fromStatus(value: TorrentState) = value.ordinal
 
     @TypeConverter
-    fun fromInt(value: Int) = TorrentStatus.values()[value]
+    fun fromInt(value: Int) = TorrentState.values()[value]
 }
