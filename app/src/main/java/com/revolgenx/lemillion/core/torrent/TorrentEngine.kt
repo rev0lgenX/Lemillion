@@ -1,13 +1,11 @@
 package com.revolgenx.lemillion.core.torrent
 
-import com.revolgenx.lemillion.core.exception.MagnetLoadException
+import com.revolgenx.lemillion.core.exception.TorrentException
+import com.revolgenx.lemillion.core.exception.TorrentLoadException
 import com.revolgenx.lemillion.core.torrent.util.array2vector
 import com.revolgenx.lemillion.core.util.postEvent
 import com.revolgenx.lemillion.event.TorrentEngineEvent
 import com.revolgenx.lemillion.event.TorrentEngineEventTypes
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.libtorrent4j.*
 import org.libtorrent4j.swig.*
 import timber.log.Timber
@@ -109,7 +107,8 @@ class TorrentEngine : SessionManager() {
             )
         )
 
-        CoroutineScope(Dispatchers.IO).launch {
+
+        Thread {
             super.start(params)
             isEngineRunning.set(true)
             postEvent(
@@ -117,7 +116,8 @@ class TorrentEngine : SessionManager() {
                     TorrentEngineEventTypes.ENGINE_STARTED
                 )
             )
-        }
+        }.start()
+
     }
 
     override fun onBeforeStop() {
@@ -158,7 +158,7 @@ class TorrentEngine : SessionManager() {
             try {
                 th = swig().find_torrent(hash)
                 if (th != null && th.is_valid) {
-                    throw MagnetLoadException("Torrent exists!!!")
+                    throw TorrentLoadException("Torrent exists!!!", null)
                 }
 
                 if (p.name.isEmpty()) p.name = strHash
@@ -174,7 +174,7 @@ class TorrentEngine : SessionManager() {
             } finally {
                 syncMagnet.unlock()
             }
-        } catch (e: MagnetLoadException) {
+        } catch (e: TorrentLoadException) {
             throw e
         } catch (e: Exception) {
             if (th != null && th.is_valid) swig().remove_torrent(th)
@@ -211,6 +211,7 @@ class TorrentEngine : SessionManager() {
     }
 
 
+    @Throws(TorrentLoadException::class)
     fun loadTorrent(
         ti: TorrentInfo,
         saveDir: File?,
@@ -221,20 +222,20 @@ class TorrentEngine : SessionManager() {
         if (swig() == null) {
             return null
         }
-        var th: torrent_handle = swig().find_torrent(ti.swig().info_hash())
+        var th = swig().find_torrent(ti.swig().info_hash())
         var priorities = pri
         if (th != null && th.is_valid) { // found a download with the same hash, just adjust the priorities if needed
-            if (priorities != null) {
-                require(ti.numFiles() == priorities.size) { "priorities count should be equals to the number of files" }
-                th.prioritize_files2(array2vector(priorities))
-            } else { // did they just add the entire torrent (therefore not selecting any priorities)
-                priorities = Priority.array(
-                    Priority.DEFAULT,
-                    ti.numFiles()
-                )
-                th.prioritize_files2(array2vector(priorities))
-            }
-            return TorrentHandle(th)
+//            if (priorities != null) {
+//                require(ti.numFiles() == priorities.size) { "priorities count should be equals to the number of files" }
+//                th.prioritize_files2(array2vector(priorities))
+//            } else { // did they just add the entire torrent (therefore not selecting any priorities)
+//                priorities = Priority.array(
+//                    Priority.DEFAULT,
+//                    ti.numFiles()
+//                )
+//                th.prioritize_files2(array2vector(priorities))
+//            }
+            throw TorrentException("Torrent Exists!!!", TorrentHandle(th))
         }
 
         var p: add_torrent_params? = null

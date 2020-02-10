@@ -22,6 +22,7 @@ import com.revolgenx.lemillion.core.util.unregisterClass
 import com.revolgenx.lemillion.event.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -78,6 +79,13 @@ class MainService : Service() {
 //        }
 //    }
 
+    private val runnable = object : Runnable {
+        override fun run() {
+            checkIfServiceIsEmpty()
+            handler.postDelayed(this, 2000)
+        }
+    }
+
 
     inner class LocalBinder : Binder() {
         val service: MainService
@@ -91,8 +99,6 @@ class MainService : Service() {
         super.onCreate()
         Timber.d("oncreate")
         notifyManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager?
-
-        Aria.download(this).register()
         makeNotifyChans(notifyManager)
     }
 
@@ -115,6 +121,7 @@ class MainService : Service() {
     //TODO://CHECK FOR DIFFERENT EVENTS
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun torrentEvent(event: TorrentEvent) {
+        handler.postDelayed(runnable, 2000)
         when (event.type) {
             TorrentEventType.TORRENT_RESUMED -> {
                 synchronized(torrentHashMap) {
@@ -168,6 +175,7 @@ class MainService : Service() {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onBookEvent(event: BookEvent) {
+        handler.postDelayed(runnable, 2000)
         when (event.bookEventType) {
             BookEventType.BOOK_RESUMED -> {
                 synchronized(bookHashMap) {
@@ -233,7 +241,7 @@ class MainService : Service() {
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onShutdownEvent(event: ShutdownEvent) {
 //        Libtorrent.pause()
-        torrentHashMap.values.forEach { it.stop() }
+        torrentHashMap.values.forEach { it.pause() }
         torrentHashMap.clear()
         Aria.download(this).stopAllTask()
         bookHashMap.clear()
@@ -269,7 +277,7 @@ class MainService : Service() {
             if (torrentHashMap.isNotEmpty()) {
                 torrentHashMap.forEach {
                     val torrent = it.value
-                    torrent.stop()
+                    torrent.pause()
                     torrentRepository.update(torrent)
                 }
             }
@@ -352,11 +360,9 @@ class MainService : Service() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
         unregisterClass(this)
         super.onDestroy()
     }
 
-    fun calltest() {
-        Timber.d("connected")
-    }
 }

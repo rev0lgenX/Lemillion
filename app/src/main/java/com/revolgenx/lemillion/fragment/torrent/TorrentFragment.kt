@@ -20,6 +20,8 @@ import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.activity.MainActivity
 import com.revolgenx.lemillion.activity.TorrentMetaActivity
 import com.revolgenx.lemillion.adapter.SelectableAdapter
+import com.revolgenx.lemillion.core.exception.TorrentPauseException
+import com.revolgenx.lemillion.core.exception.TorrentResumeException
 import com.revolgenx.lemillion.core.service.isServiceRunning
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSortingComparator
 import com.revolgenx.lemillion.core.torrent.Torrent
@@ -329,9 +331,17 @@ class TorrentFragment :
                     torrentAdapterConstraintLayout.isSelected = isSelected(adapterPosition)
                     pausePlayIv.setOnClickListener {
                         if (torrent!!.isPausedWithState()) {
-                            torrent!!.start()
+                            try {
+                                torrent!!.resume()
+                            } catch (e: TorrentResumeException) {
+                                makeToast(e.message)
+                            }
                         } else {
-                            torrent!!.stop()
+                            try {
+                                torrent!!.pause()
+                            } catch (e: TorrentPauseException) {
+                                makeToast(e.message)
+                            }
                         }
                     }
 

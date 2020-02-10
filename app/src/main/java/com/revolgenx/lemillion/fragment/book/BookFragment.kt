@@ -35,9 +35,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookViewHolder, Book>() {
     companion object {
-        fun newInstance() = BookFragment().apply {
-            Aria.download(this).register()
-        }
+        fun newInstance() = BookFragment()
     }
 
     private val viewModel by viewModel<BookViewModel>()

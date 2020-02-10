@@ -97,6 +97,7 @@
     <string name="peer">Peer</string>
     <string name="unknown_scheme">Unknown Scheme</string>
     <string name="restart">Restart</string>
+    <string name="unsupported_format">Unsupported format</string>
 
 
     <string-array name="sort_array">

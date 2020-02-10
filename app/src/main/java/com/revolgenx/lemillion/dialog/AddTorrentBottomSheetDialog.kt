@@ -23,7 +23,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.adapter.FilesTreeAdapter
-import com.revolgenx.lemillion.core.exception.MagnetLoadException
+import com.revolgenx.lemillion.core.exception.TorrentLoadException
 import com.revolgenx.lemillion.core.preference.storagePath
 import com.revolgenx.lemillion.core.torrent.Torrent
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
@@ -122,7 +122,11 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
                 try {
                     handle =
                         engine.loadTorrent(TorrentInfo(uri.toFile()), File(path), null, null, null)
-                } catch (e: Exception) {
+                } catch (e: TorrentLoadException) {
+                    context!!.showErrorDialog(e.message ?: "error")
+                    dismiss()
+                    return
+                }catch (e:Exception){
                     context!!.showErrorDialog(e.message ?: "error")
                     dismiss()
                     return
@@ -132,7 +136,7 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
             MAGNET_PREFIX -> {
                 try {
                     handle = engine.fetchMagnet(uri.toString())
-                } catch (e: MagnetLoadException) {
+                } catch (e: TorrentLoadException) {
                     context!!.showErrorDialog(e.message ?: "error")
                     dismiss()
                     return
@@ -152,6 +156,10 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
                         null,
                         null, null
                     )
+                } catch (e: TorrentLoadException) {
+                    context!!.showErrorDialog(e.message ?: "error")
+                    dismiss()
+                    return
                 } catch (e: Exception) {
                     context!!.showErrorDialog(e.message ?: "error")
                     dismiss()
@@ -208,6 +216,7 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
                         it.path = torrentPathMetaTv.description
                         it.hash = torrentMetaHashTv.description
                         it.handle = handle
+                        it.simpleState = true
                         if (handle!!.status().hasMetadata()) {
                             it.magnet = handle!!.makeMagnetUri()
                             it.source = handle!!.torrentFile().bencode()!!

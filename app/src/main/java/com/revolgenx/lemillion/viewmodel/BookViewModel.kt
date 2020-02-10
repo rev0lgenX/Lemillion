@@ -85,6 +85,8 @@ class BookViewModel(
     fun onBookEvent(event: BookEvent) {
         if (context.isServiceRunning()) return
 
+        if (event.books.isEmpty()) return
+
         if (event.bookEventType == BookEventType.BOOK_RESUMED || event.bookEventType == BookEventType.BOOK_RESTART) {
             connector.connect { service, connected ->
                 connector.serviceConnectionListener = null
@@ -110,6 +112,8 @@ class BookViewModel(
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onBookRemovedEvent(event: BookRemovedEvent) {
+        if(event.ids.none { it != -1L }) return
+
         synchronized(bookHashMap) {
             viewModelScope.launch {
                 event.ids.forEach { id ->
@@ -126,7 +130,7 @@ class BookViewModel(
 
 
     fun resumeAll() {
-        if(bookHashMap.isEmpty()) return
+        if (bookHashMap.isEmpty()) return
         Aria.download(this).resumeAllTask()
         connector.connect { service, connected ->
             connector.serviceConnectionListener = null
@@ -138,7 +142,7 @@ class BookViewModel(
     }
 
     fun pauseAll() {
-        if(bookHashMap.isEmpty()) return
+        if (bookHashMap.isEmpty()) return
         Aria.download(this).stopAllTask()
         postEvent(BookEvent(bookHashMap.values.toList(), BookEventType.BOOK_PAUSED))
     }

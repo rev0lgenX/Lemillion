@@ -44,16 +44,17 @@ class TitleTextView(context: Context, attributeSet: AttributeSet?, defStyle: Int
                 .apply {
                     titleName = getString(R.styleable.TitleTextView_titleName) ?: ""
                     showDrawable = getBoolean(R.styleable.TitleTextView_showDrawable, false)
-                    if (showDrawable)
-                        imageResource =
-                            getResourceId(R.styleable.TitleTextView_descriptionDrawable, 0)
+//                    if (showDrawable)
+                    imageResource =
+                        getResourceId(R.styleable.TitleTextView_descriptionDrawable, 0)
                 }
         }
 
-        if (showDrawable)
-            AppCompatImageView(context).let { iv ->
-                iv.id = R.id.descriptionImageView
-                iv.layoutParams = LayoutParams(dip(20), ViewGroup.LayoutParams.WRAP_CONTENT).also { params ->
+//        if (showDrawable)
+        AppCompatImageView(context).let { iv ->
+            iv.id = R.id.descriptionImageView
+            iv.layoutParams =
+                LayoutParams(dip(20), ViewGroup.LayoutParams.WRAP_CONTENT).also { params ->
                     params.addRule(
                         ALIGN_PARENT_RIGHT
                     )
@@ -62,16 +63,19 @@ class TitleTextView(context: Context, attributeSet: AttributeSet?, defStyle: Int
                     )
                 }
 
-                if (imageResource != 0) {
-                    iv.setImageResource(imageResource)
-                }
-
-                iv.supportImageTintList = ColorStateList.valueOf(iconColor)
-                iv.setOnClickListener {
-                    imageCallback?.invoke()
-                }
-                addView(iv)
+            if (imageResource != 0) {
+                iv.setImageResource(imageResource)
+            } else {
+                iv.visibility = View.GONE
             }
+            iv.visibility = if (showDrawable) View.VISIBLE else View.GONE
+
+            iv.supportImageTintList = ColorStateList.valueOf(iconColor)
+            iv.setOnClickListener {
+                imageCallback?.invoke()
+            }
+            addView(iv)
+        }
 
 
         TextView(context)

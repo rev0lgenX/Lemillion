@@ -38,6 +38,12 @@ class Book() : Parcelable {
 
     var id: Long = -1
     var entity: DownloadEntity? = null
+        get() {
+            return if(field == null){
+                field = Aria.download(this).load(id).entity
+                field
+            }else field
+        }
     var listeners: MutableList<BookProgressListener> = mutableListOf()
     var bookProtocol = BookProtocol.UNKNOWN
 
@@ -206,34 +212,34 @@ class Book() : Parcelable {
 
     @Download.onTaskRunning
     fun running(task: DownloadTask?) {
-        if(!checkTaskValidity(task)) return
+        if (!checkTaskValidity(task)) return
         update(task)
     }
 
     @Download.onTaskResume
     fun taskResume(task: DownloadTask?) {
-        if(!checkTaskValidity(task)) return
+        if (!checkTaskValidity(task)) return
         postEvent(BookEvent(listOf(this), BookEventType.BOOK_RESUMED))
         update(task)
     }
 
     @Download.onTaskStop
     fun taskStop(task: DownloadTask?) {
-        if(!checkTaskValidity(task)) return
+        if (!checkTaskValidity(task)) return
         postEvent(BookEvent(listOf(this), BookEventType.BOOK_PAUSED))
         update(task)
     }
 
     @Download.onTaskCancel
     fun taskCancel(task: DownloadTask?) {
-        if(!checkTaskValidity(task)) return
+        if (!checkTaskValidity(task)) return
         postEvent(BookEvent(listOf(this), BookEventType.BOOK_PAUSED))
         update(task)
     }
 
     @Download.onTaskFail
     fun taskFail(task: DownloadTask?, e: Exception?) {
-        if(!checkTaskValidity(task)) return
+        if (!checkTaskValidity(task)) return
         postEvent(BookEvent(listOf(this), BookEventType.BOOK_FAILED))
 
         hasError = true
@@ -246,7 +252,7 @@ class Book() : Parcelable {
 
     @Download.onTaskComplete
     fun taskComplete(task: DownloadTask?) {
-        if(!checkTaskValidity(task)) return
+        if (!checkTaskValidity(task)) return
         postEvent(BookEvent(listOf(this), BookEventType.BOOK_COMPLETED))
         update(task)
     }

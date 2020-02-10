@@ -3,11 +3,18 @@ package com.revolgenx.lemillion.core.torrent
 import android.os.Parcel
 import android.os.Parcelable
 import com.revolgenx.lemillion.core.db.torrent.TorrentEntity
+import com.revolgenx.lemillion.core.exception.TorrentException
+import com.revolgenx.lemillion.core.exception.TorrentPauseException
+import com.revolgenx.lemillion.core.exception.TorrentResumeException
 import com.revolgenx.lemillion.core.util.postEvent
 import com.revolgenx.lemillion.core.util.postStickyEvent
 import com.revolgenx.lemillion.event.TorrentEvent
 import com.revolgenx.lemillion.event.TorrentEventType
 import com.revolgenx.lemillion.event.UpdateDataBase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 import org.libtorrent4j.*
@@ -17,11 +24,12 @@ import org.libtorrent4j.swig.add_torrent_params
 import timber.log.Timber
 import java.io.File
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 
 typealias TorrentProgressListener = (() -> Unit)?
 
-class Torrent() : Parcelable, KoinComponent, AlertListener {
+class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
 
     constructor(parcel: Parcel) : this() {
         hash = parcel.readString()!!
@@ -34,32 +42,12 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
         errorMsg = parcel.readString()!!
     }
 
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+
     private var lastSaveResumeTime: Long = 0
-    private val SAVE_RESUME_SYNC_TIME: Long = 10000 /* ms */
-
-
-    override fun types(): IntArray = intArrayOf(
-        AlertType.ADD_TORRENT.swig(),
-        AlertType.BLOCK_DOWNLOADING.swig(),
-        AlertType.TORRENT_CHECKED.swig(),
-        AlertType.STATE_UPDATE.swig(),
-        AlertType.BLOCK_FINISHED.swig(),
-        AlertType.STATE_CHANGED.swig(),
-        AlertType.TORRENT_FINISHED.swig(),
-        AlertType.TORRENT_REMOVED.swig(),
-        AlertType.TORRENT_PAUSED.swig(),
-        AlertType.TORRENT_RESUMED.swig(),
-        AlertType.STATS.swig(),
-        AlertType.SAVE_RESUME_DATA.swig(),
-        AlertType.STORAGE_MOVED.swig(),
-        AlertType.STORAGE_MOVED_FAILED.swig(),
-        AlertType.METADATA_RECEIVED.swig(),
-        AlertType.PIECE_FINISHED.swig(),
-        AlertType.READ_PIECE.swig(),
-        AlertType.TORRENT_ERROR.swig(),
-        AlertType.METADATA_FAILED.swig(),
-        AlertType.FILE_ERROR.swig()
-    )
+    private val saveResumeSyncTime: Long = 10000 /* ms */
 
     var listeners = mutableListOf<TorrentProgressListener>()
 
@@ -79,14 +67,15 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
         }
 
     var fastResumeData: ByteArray = byteArrayOf()
+    var corruptedResumeData = false
+    var saveResumeCounter = 0
     var source: ByteArray = byteArrayOf()
         set(value) {
-            Timber.d("source ${value.contentToString()} fast $fastResumeData")
             if (value.isNotEmpty())
                 field = value
 
             if (value.isNotEmpty() && handle == null) {
-                handle =
+                handle = try {
                     engine.loadTorrent(
                         TorrentInfo(value),
                         File(path),
@@ -94,6 +83,11 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
                         priorities,
                         null
                     )
+                } catch (e: TorrentException) {
+                    e.data as? TorrentHandle
+                } catch (e: Exception) {
+                    null
+                }
             } else if (magnet.isNotEmpty() && handle == null) {
                 handle = engine.loadTorrent(magnet, File(path))
             }
@@ -105,7 +99,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
     var path: String = ""
     var name: String = ""
         get() {
-            if (handle == null) return field
+            if (!checkValidity()) return field
             return handle!!.name()
         }
 
@@ -119,17 +113,17 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
     var createDate: Date = Date(System.currentTimeMillis())
     val downloadSpeed: Long
         get() {
-            if(!checkValidity())return 0
+            if (!checkValidity()) return 0
             return handle!!.status().downloadRate().toLong()
         }
 
     val uploadSpeed: Long
         get() {
-            if(!checkValidity())return 0
+            if (!checkValidity()) return 0
             return handle!!.status().uploadRate().toLong()
         }
 
-    var state: TorrentState = TorrentState.UNKNOWN
+    val state: TorrentState
         get() {
             if (handle == null) return TorrentState.UNKNOWN
 
@@ -219,12 +213,13 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
 
     fun eta(): Long {
         return if (!checkValidity() && state != TorrentState.DOWNLOADING && !torrentStatus().hasMetadata()) 0
-        else
+        else if (torrentStatus().hasMetadata()) {
             handle!!.torrentFile().let {
                 val left = it.totalSize() - torrentStatus().totalDone()
                 val rate = torrentStatus().downloadPayloadRate()
                 if (left <= 0 || rate <= 0) 0 else left / rate
             }
+        } else 0
     }
 
     fun isPausedWithState(): Boolean {
@@ -243,33 +238,50 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
 
 
     //TODO: CHECK FILE EXITS | CHECK STORAGE EJECTED CONDITION| READONLY | TORRENT_ALTERED | FREE_SPACE
-    fun start() {
-        if (handle == null || !handle!!.isValid) return
+    @Throws(TorrentResumeException::class)
+    fun resume(force: Boolean = false) {
+        if (!checkValidity()) throw TorrentResumeException("invalid torrent session", null)
+
+        if (saveResumeCounter > 4 && !force)
+            throw TorrentResumeException("Saving data, please wait", null)
+
+//        if(!isPausedWithState()) return
 
         if (engine.settings.autoManaged)
             handle!!.setFlags(TorrentFlags.AUTO_MANAGED)
         else
             handle!!.unsetFlags(TorrentFlags.AUTO_MANAGED)
+
         try {
             hasError = false
             errorMsg = ""
-            handle!!.resume()
-        } catch (e: Exception) {
 
+            if (corruptedResumeData) {
+                recheck()
+            }
+
+            handle!!.resume()
+            saveResumeData(true)
+        } catch (e: Exception) {
+            throw TorrentResumeException("resume exception", e)
         }
-        saveResumeData(true)
     }
 
-    fun stop() {
-        if (!checkValidity()) return
+    @Throws(TorrentPauseException::class)
+    fun pause(force: Boolean = false) {
+        if (!checkValidity()) throw TorrentPauseException("invalid torrent session", null)
+
+        if (saveResumeCounter > 4 && !force)
+            throw TorrentResumeException("Saving data, please wait", null)
+
 
         handle!!.unsetFlags(TorrentFlags.AUTO_MANAGED)
         try {
             handle!!.pause()
+            saveResumeData(true)
         } catch (e: Exception) {
-
+            throw TorrentPauseException("pause exception", e)
         }
-        saveResumeData(true)
     }
 
     fun remove(withFiles: Boolean) {
@@ -299,16 +311,21 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
     /*
      * Generate fast-resume data for the torrent, see libtorrent documentation
      */
-    fun saveResumeData(force: Boolean) {
+    private fun saveResumeData(force: Boolean) {
         val now = System.currentTimeMillis()
-        if (force || now - lastSaveResumeTime >= SAVE_RESUME_SYNC_TIME) {
+        if (force || now - lastSaveResumeTime >= saveResumeSyncTime) {
             lastSaveResumeTime = now
         } else { /* Skip, too fast, see SAVE_RESUME_SYNC_TIME */
             return
         }
+
+        if (saveResumeCounter > 5) return
+
         try {
-            if (handle != null && handle!!.isValid) {
+            if (checkValidity()) {
+                Timber.d("saving start ${System.currentTimeMillis()}")
                 handle!!.saveResumeData(TorrentHandle.SAVE_INFO_DICT)
+                saveResumeCounter++
             }
         } catch (e: Exception) {
             Timber.w("%s:", "Error triggering resume data of " + hash)
@@ -317,21 +334,43 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
     }
 
 
-    fun check() {
+    fun recheck() {
         if (handle == null) return
         handle!!.forceRecheck()
-        start()
         update()
     }
 
-    override fun equals(other: Any?): Boolean {
-        return if ((other is Torrent)) {
-            other.hash == hash
-        } else false
-    }
+
+    override fun types(): IntArray = intArrayOf(
+        AlertType.ADD_TORRENT.swig(),
+        AlertType.METADATA_RECEIVED.swig(),
+        AlertType.BLOCK_DOWNLOADING.swig(),
+        AlertType.BLOCK_FINISHED.swig(),
+        AlertType.STATE_UPDATE.swig(),
+        AlertType.STATE_CHANGED.swig(),
+        AlertType.TORRENT_CHECKED.swig(),
+        AlertType.TORRENT_FINISHED.swig(),
+        AlertType.TORRENT_REMOVED.swig(),
+        AlertType.TORRENT_PAUSED.swig(),
+        AlertType.TORRENT_RESUMED.swig(),
+        AlertType.TORRENT_ERROR.swig(),
+        AlertType.FASTRESUME_REJECTED.swig(),
+        AlertType.STATS.swig(),
+        AlertType.SAVE_RESUME_DATA.swig(),
+        AlertType.SAVE_RESUME_DATA_FAILED.swig(),
+        AlertType.STORAGE_MOVED.swig(),
+        AlertType.STORAGE_MOVED_FAILED.swig(),
+        AlertType.PIECE_FINISHED.swig(),
+        AlertType.READ_PIECE.swig(),
+        AlertType.METADATA_FAILED.swig(),
+        AlertType.FILE_ERROR.swig()
+    )
+
 
     override fun alert(alert: Alert<*>?) {
+
         if (alert !is TorrentAlert<*>) return
+
         if (handle == null) return
         if (!alert.handle().swig().op_eq(handle!!.swig())) return
 
@@ -344,42 +383,61 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
             AlertType.STATE_CHANGED -> {
                 update()
             }
-            AlertType.TORRENT_FINISHED -> {
-                saveResumeData(true)
-                postEvent(TorrentEvent(listOf(this), TorrentEventType.TORRENT_FINISHED))
-                update()
-            }
-            AlertType.TORRENT_REMOVED -> {
-
-            }
-            AlertType.TORRENT_PAUSED -> {
-                postStickyEvent(
-                    TorrentEvent(
-                        listOf(this),
-                        TorrentEventType.TORRENT_PAUSED
-                    )
-                )
-                simpleState = false
-                update()
-            }
             AlertType.TORRENT_RESUMED -> {
                 postStickyEvent(
                     TorrentEvent(
-                        listOf(this),
+                        listOf(this@Torrent),
                         TorrentEventType.TORRENT_RESUMED
                     )
                 )
                 simpleState = true
                 update()
             }
+            AlertType.TORRENT_PAUSED -> {
+                postStickyEvent(
+                    TorrentEvent(
+                        listOf(this@Torrent),
+                        TorrentEventType.TORRENT_PAUSED
+                    )
+                )
+                simpleState = false
+                update()
+            }
+            AlertType.TORRENT_FINISHED -> {
+                saveResumeData(true)
+                postEvent(TorrentEvent(listOf(this@Torrent), TorrentEventType.TORRENT_FINISHED))
+                update()
+            }
+            AlertType.TORRENT_REMOVED -> {
+
+            }
+
+            AlertType.TORRENT_CHECKED -> {
+                saveResumeData(true)
+            }
             AlertType.STATS -> {
                 update()
             }
             AlertType.SAVE_RESUME_DATA -> {
-                fastResumeData =
-                    Vectors.byte_vector2bytes(add_torrent_params.write_resume_data((alert as SaveResumeDataAlert).params().swig()).bencode())
-                update()
+                corruptedResumeData = false
+                saveResumeCounter--
+                try {
+                    Timber.d("saving done ${System.currentTimeMillis()}")
+                    fastResumeData =
+                        Vectors.byte_vector2bytes(add_torrent_params.write_resume_data((alert as SaveResumeDataAlert).params().swig()).bencode())
+
+                } catch (e: Exception) {
+
+                }
             }
+            AlertType.SAVE_RESUME_DATA_FAILED -> {
+                saveResumeCounter--
+            }
+
+            AlertType.FASTRESUME_REJECTED -> {
+                corruptedResumeData = true
+            }
+
             AlertType.STORAGE_MOVED -> {
                 saveResumeData(true)
                 update()
@@ -446,7 +504,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
                 )
                 if (error.isError) {
                     hasError = true
-                    errorMsg = "[" + filename + "] " + error.message() ?: ""
+                    errorMsg = "[" + filename + "] " + error.message()
                     postEvent(
                         TorrentEvent(
                             listOf(this),
@@ -466,7 +524,6 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
     fun toEntity(): TorrentEntity {
         return TorrentEntity(
             hash,
-            state,
             path,
             magnet,
             createDate,
@@ -505,6 +562,14 @@ class Torrent() : Parcelable, KoinComponent, AlertListener {
         if (!checkValidity()) return
         handle!!.forceReannounce()
     }
+
+
+    override fun equals(other: Any?): Boolean {
+        return if ((other is Torrent)) {
+            other.hash == hash
+        } else false
+    }
+
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.apply {

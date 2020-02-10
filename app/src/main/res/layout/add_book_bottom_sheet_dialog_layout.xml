@@ -62,7 +62,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 app:descriptionDrawable="@drawable/ic_edit"
-                app:showDrawable="true"
+                app:showDrawable="false"
                 app:titleName="Name" />
 
             <com.revolgenx.lemillion.view.TitleTextView
@@ -71,7 +71,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 app:descriptionDrawable="@drawable/ic_folder"
-                app:showDrawable="true"
+                app:showDrawable="false"
                 app:titleName="Name" />
 
             <com.revolgenx.lemillion.view.TitleTextView

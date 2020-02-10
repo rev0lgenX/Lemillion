@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import timber.log.Timber
+import java.lang.Exception
 
 class TorrentViewModel(
     private val context: Context,
@@ -64,9 +65,11 @@ class TorrentViewModel(
                     val resource = torrentRepository.add(torrent)
 
                     if (resource.status == Status.SUCCESS) {
-                        torrent.simpleState = true
                         if (torrent.isPaused()) {
-                            torrent.start()
+                            try {
+                                torrent.resume()
+                            } catch (e: Exception) {
+                            }
                         }
                         torrentHashMap[torrent.hash] = torrent
                         updateResource()
@@ -106,6 +109,8 @@ class TorrentViewModel(
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun torrentEvent(event: TorrentEvent) {
         if (context.isServiceRunning()) return
+        if (event.torrents.isEmpty()) return
+
         when (event.type) {
             TorrentEventType.TORRENT_RESUMED -> {
                 connector.connect { service, connected ->
@@ -132,11 +137,15 @@ class TorrentViewModel(
 
 
     fun resumeAll() {
-        if(torrentHashMap.isEmpty()) return
+        if (torrentHashMap.isEmpty()) return
 
         torrentHashMap.values.forEach {
-            it.start()
-            it.update()
+            try {
+                it.resume(true)
+                it.update()
+            } catch (e: Exception) {
+
+            }
         }
 
         connector.connect { service, connected ->
@@ -144,7 +153,7 @@ class TorrentViewModel(
             if (connected) {
                 postEvent(
                     TorrentEvent(
-                        torrentHashMap.values.toList(),
+                        torrentHashMap.values.filter { !it.isPaused() }.toList(),
                         TorrentEventType.TORRENT_RESUMED
                     )
                 )
@@ -154,11 +163,15 @@ class TorrentViewModel(
     }
 
     fun pauseAll() {
-        if(torrentHashMap.isEmpty()) return
+        if (torrentHashMap.isEmpty()) return
 
         torrentHashMap.values.forEach {
-            it.stop()
-            it.update()
+            try {
+                it.pause(true)
+                it.update()
+            } catch (e: Exception) {
+
+            }
         }
 
         connector.connect { service, connected ->
@@ -166,7 +179,7 @@ class TorrentViewModel(
             if (connected) {
                 postEvent(
                     TorrentEvent(
-                        torrentHashMap.values.toList(),
+                        torrentHashMap.values.filter { it.isPaused() }.toList(),
                         TorrentEventType.TORRENT_PAUSED
                     )
                 )
@@ -227,7 +240,7 @@ class TorrentViewModel(
     fun recheckTorrents(selectedHashes: List<String>) {
         val torrents = selectedHashes.mapNotNull { torrentHashMap[it] }.toList()
         torrents.forEach {
-            it.check()
+            it.recheck()
             it.update()
         }
 

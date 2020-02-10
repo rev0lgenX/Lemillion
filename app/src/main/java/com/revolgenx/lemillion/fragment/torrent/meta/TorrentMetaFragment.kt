@@ -75,7 +75,11 @@ class TorrentMetaFragment : TorrentBaseMetaFragment(), TorrentProgressListener {
             )
 
         torrentAddedTv.description = torrent.createDate.toString()
-        val createdDate = handle!!.torrentFile().creationDate()
+
+        val createdDate = if (torrent.torrentStatus().hasMetadata()) {
+            handle!!.torrentFile().creationDate()
+        } else 0
+
         torrentCreatedTv.descriptionTextView().setNAText(
             if (createdDate == 0L) "" else date.apply { time = createdDate * 1000 }.toString()
         )

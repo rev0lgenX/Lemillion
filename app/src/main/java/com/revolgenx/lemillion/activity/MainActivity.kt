@@ -131,6 +131,8 @@ class MainActivity : AppCompatActivity() {
             uri = intent.getParcelableExtra("uri")
         }
 
+
+        //TODO:SEARCH
         savedInstanceState?.let {
             it.getString(queryKey)?.let {
                 query = it
@@ -162,6 +164,7 @@ class MainActivity : AppCompatActivity() {
                 if (CheckUtil.checkUrl(uri.toString())) {
                     AddBookBottomSheetDialog.newInstance(uri.toString())
                         .show(supportFragmentManager, "add_book_fragment_tag")
+
                 } else {
                     showErrorDialog(getString(R.string.invalid_url))
                 }
@@ -170,37 +173,13 @@ class MainActivity : AppCompatActivity() {
             CONTENT_PREFIX -> {
                 AddTorrentBottomSheetDialog.newInstance(uri!!)
                     .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
-
-
-//                val contentTmp = makeTempFile(
-//                    this,
-//                    ".torrent"
-//                )
-//
-//                copyContentURIToFile(
-//                    this,
-//                    uri!!,
-//                    contentTmp
-//                )
-//
-//                if (contentTmp.exists()) {
-//                    val buf = FileUtils.readFileToByteArray(contentTmp)
-//                    val t = Libtorrent.addTorrentFromBytes(storagePath(this), buf)
-//                    if (t == -1L) {
-//                        showErrorDialog(Libtorrent.error())
-//                    } else {
-//                        //open dialog
-//                        AddTorrentBottomSheetDialog.newInstance(t)
-//                            .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
-//                    }
-//                } else {
-//                    showErrorDialog("Unknown Error")
-//                }
             }
-
-
+            else -> {
+                showErrorDialog(getString(R.string.unsupported_format))
+            }
         }
 
+        intent?.removeExtra("uri")
         this.uri = null
     }
 
@@ -210,7 +189,7 @@ class MainActivity : AppCompatActivity() {
             this.overlayLayout?.setOnClickListener {
                 this.close(true)
             }
-            
+
             mainFabClosedIconColor =
                 ContextCompat.getColor(context, R.color.colorPrimaryInverseDark)
             mainFabOpenedIconColor =

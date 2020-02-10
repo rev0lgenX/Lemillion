@@ -34,9 +34,10 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
     private val urlKey = "url_key"
     private val pathKey = "path_key"
     private val nameKey = "name_key"
+    private val taskKey = "task_key"
+    private val failedCauseKey = "failed_cause_key"
     private var taskId = -1L
 
-    private var onPreComplete = false
 
     private var url: String = ""
     private var path: String = ""
@@ -45,6 +46,7 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
         get() = "$path/$name"
     private var failCause = TaskFailedCause.NONE
 
+    private var done = false
 
     enum class TaskFailedCause {
         NONE, HTTP_NOT_FOUND, TASK_EXIST, FILE_EXIST, SAME_URL, LOW_SPACE, UNKNOWN, FINDING
@@ -90,10 +92,11 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(nameKey, name)
         outState.putString(pathKey, path)
-        if (taskId != -1L) {
-            Aria.download(this).load(taskId).cancel()
-        }
+//        if (taskId != -1L) {
+//            Aria.download(this).load(taskId).cancel()
+//        }
 
+        outState.putLong(taskKey, taskId)
         super.onSaveInstanceState(outState)
     }
 
@@ -106,20 +109,24 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
             TaskFailedCause.NONE -> {
                 showStatusProgress(visibility = false)
                 errorTextView.visibility = View.GONE
+                showDrawables(true)
             }
             TaskFailedCause.TASK_EXIST -> {
                 errorTextView.visibility = View.VISIBLE
                 errorTextView.text =
                     getString(R.string.task_exists_please_change_the_file_name_or_path_and_continue)
+                showDrawables(true)
             }
             TaskFailedCause.FILE_EXIST -> {
                 errorTextView.visibility = View.VISIBLE
                 errorTextView.text =
                     getString(R.string.task_exists_please_change_the_file_name_or_path_and_continue)
+                showDrawables(true)
             }
             TaskFailedCause.HTTP_NOT_FOUND -> {
                 errorTextView.visibility = View.VISIBLE
                 errorTextView.text = getString(R.string.http_not_found)
+                showDrawables(false)
             }
 
             TaskFailedCause.LOW_SPACE -> {
@@ -128,24 +135,37 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
             TaskFailedCause.SAME_URL -> {
                 errorTextView.visibility = View.VISIBLE
                 errorTextView.text = getString(R.string.task_with_same_url_exists)
+                showDrawables(false)
             }
             TaskFailedCause.UNKNOWN -> {
                 errorTextView.visibility = View.VISIBLE
                 errorTextView.text = getString(R.string.unknown)
+                showDrawables(false)
             }
             TaskFailedCause.FINDING -> {
-
+                showDrawables(false)
             }
         }
     }
 
+    private fun showDrawables(b: Boolean = false) {
+        bookNameTv.showDrawable(b)
+        bookPathTv.showDrawable(b)
+    }
 
     private fun addListener() {
         bookNameTv.setDrawableClickListener {
             MaterialDialog(this.context!!).show {
                 inputDialog(this.context, prefill = name) { _, charSequence ->
-                    name = charSequence.toString()
-                    createAriaDownload()
+                    val tempName = charSequence.toString()
+                    if (File("$path/$tempName").exists()) {
+                        context.showErrorDialog(getString(R.string.file_exists))
+                        return@inputDialog
+                    }
+                    if (!possibleError("$path/$tempName")) {
+                        name = tempName
+                    }
+                    updateView()
                 }
                 title(R.string.enter_file_name)
                 positiveButton(R.string.ok)
@@ -156,60 +176,119 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
         bookPathTv.setDrawableClickListener {
             MaterialDialog(this.context!!).show {
                 folderChooser { dialog, file ->
-                    path = file.path
-                    createAriaDownload()
+                    val tempPath = file.path
+                    if (File("$tempPath/$name").exists()) {
+                        context.showErrorDialog(getString(R.string.file_exists))
+                        return@folderChooser
+                    }
+                    if (!possibleError("$tempPath/$name")) {
+                        path = file.path
+                    }
+                    updateView()
                 }
             }
         }
 
         bookUrlTv.setDrawableClickListener {
             (activity as MainActivity).openLinkInputDialog()
-            dialog?.cancel()
+            dismiss()
         }
 
 
         cancelBookTv.setOnClickListener {
-            dialog?.cancel()
-        }
-
-        addBookTv.setOnClickListener {
-            if (!onPreComplete || taskId == -1L) {
-                if (failCause == TaskFailedCause.FINDING) {
-                    makeToast(resId = R.string.please_wait)
-                } else {
-                    makeToast(resId = R.string.unresolved_issues)
-                }
-                return@setOnClickListener
-            }
-
-            val protocol = when {
-                url.startsWith(HTTP_PREFIX) || url.startsWith(HTTPS_PREFIX) -> BookProtocol.HTTP
-                url.startsWith(FTP_PREFIX) -> BookProtocol.FTP
-                else -> {
-                    context?.showErrorDialog("unsupported url")
+            if (taskId != -1L) {
+                val downloadTask = Aria.download(this).load(taskId)
+                if (downloadTask.taskState == 5 || downloadTask.taskState == 6) {
+                    makeToast(getString(R.string.please_wait_collecting_data))
                     return@setOnClickListener
                 }
             }
+            dismiss()
+        }
 
-            postEvent(BookAddedEvent(Book().also { book ->
-                book.id = taskId
-                book.entity = Aria.download(this).load(taskId).entity
-                book.bookProtocol = protocol
-            }))
+        addBookTv.setOnClickListener {
 
-            dialog?.dismiss()
+            when (failCause) {
+                TaskFailedCause.NONE -> {
+                    val protocol = when {
+                        url.startsWith(HTTP_PREFIX) || url.startsWith(HTTPS_PREFIX) -> BookProtocol.HTTP
+                        url.startsWith(FTP_PREFIX) -> BookProtocol.FTP
+                        else -> {
+                            context?.showErrorDialog("unsupported url")
+                            return@setOnClickListener
+                        }
+                    }
+                    postEvent(BookAddedEvent(Book().also { book ->
+                        book.id = Aria.download(this).load(url).setFilePath(fullPath).create()
+                        book.bookProtocol = protocol
+                    }))
+                    done = true
+                    dialog?.dismiss()
+                }
+                TaskFailedCause.HTTP_NOT_FOUND -> {
+                    makeToast(resId = R.string.unresolved_issues)
+                }
+                TaskFailedCause.TASK_EXIST -> {
+                    makeToast(resId = R.string.unresolved_issues)
+                }
+                TaskFailedCause.FILE_EXIST -> {
+                    makeToast(resId = R.string.unresolved_issues)
+                }
+                TaskFailedCause.SAME_URL -> {
+                    makeToast(resId = R.string.unresolved_issues)
+                }
+                TaskFailedCause.LOW_SPACE -> {
+                    makeToast(resId = R.string.unresolved_issues)
+                }
+                TaskFailedCause.UNKNOWN -> {
+                    makeToast(resId = R.string.unresolved_issues)
+                }
+                TaskFailedCause.FINDING -> {
+                    makeToast(resId = R.string.please_wait)
+                }
+            }
         }
     }
 
+    private fun possibleError(newPath: String): Boolean {
+        failCause = TaskFailedCause.NONE
+
+        if (!CheckUtil.checkDPathConflicts(false, newPath)) {
+            makeToast(resId = R.string.task_exists)
+            failCause = TaskFailedCause.TASK_EXIST
+            showStatusProgress(R.string.failed)
+            return true
+        }
+
+        if (File(newPath).exists()) {
+            makeToast(resId = R.string.file_exists)
+            failCause = TaskFailedCause.FILE_EXIST
+            showStatusProgress(R.string.failed)
+            return true
+        }
+
+        if (Aria.download(this).taskExists(url)) {
+            makeToast(resId = R.string.file_exists)
+            failCause = TaskFailedCause.SAME_URL
+            showStatusProgress(R.string.failed)
+            return true
+        }
+
+        //todo check space
+
+        return false
+    }
 
     @Download.onTaskRunning
     fun onTaskRunning(task: DownloadTask) {
-        Aria.download(this).load(task.entity.id).stop()
+        taskId = -1
         showStatusProgress(visibility = false)
-        onPreComplete = true
         failCause = TaskFailedCause.NONE
-        name = task.downloadEntity.serverFileName ?: name
-        Aria.download(this).load(taskId).modifyFilePath(fullPath).save()
+        name =
+            task.downloadEntity.serverFileName ?: name
+
+        Aria.download(this).load(task.entity.id).stop()
+        Aria.download(this).load(task.entity.id).cancel(true)
         updateView()
     }
 
@@ -241,8 +320,6 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
     }
 
     private fun createAriaDownload() {
-        failCause = TaskFailedCause.NONE
-        onPreComplete = false
 
         if (taskId != -1L) {
             Aria.download(this).load(taskId).cancel()
@@ -251,31 +328,12 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
         showStatusProgress(R.string.checking, progress = true)
 
-        if (!CheckUtil.checkDPathConflicts(false, fullPath)) {
-            makeToast(resId = R.string.task_exists)
-            failCause = TaskFailedCause.TASK_EXIST
-            showStatusProgress(R.string.failed)
-            updateView()
-            return
-        }
-
-        if (File(path, name).exists()) {
-            makeToast(resId = R.string.file_exists)
-            failCause = TaskFailedCause.FILE_EXIST
-            showStatusProgress(R.string.failed)
-            updateView()
-            return
-        }
-
-        if (Aria.download(this).taskExists(url)) {
-            makeToast(resId = R.string.file_exists)
-            failCause = TaskFailedCause.SAME_URL
-            showStatusProgress(R.string.failed)
-            updateView()
-            return
-        }
-
         //TODO://check space
+
+        if (possibleError(fullPath)) {
+            updateView()
+            return
+        }
 
         failCause = TaskFailedCause.FINDING
         updateView()
@@ -295,6 +353,7 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 //            }
         } else {
             context!!.showErrorDialog(getString(R.string.unsupported_url))
+            dismiss()
         }
     }
 
@@ -307,29 +366,16 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
             checkingTv.visibility = View.GONE
             return
         }
-
         checkingTv.visibility = View.VISIBLE
         checkingTv.showProgress(resId = resId, b = progress)
     }
 
-
-    override fun onCancel(dialog: DialogInterface) {
-        removeTask()
-        super.onCancel(dialog)
-    }
-
-    private fun removeTask() {
-        if (taskId != -1L) {
-            val downloadTask = Aria.download(this).load(taskId)
-            if (downloadTask.taskState == 5 || downloadTask.taskState == 6) {
-                makeToast(getString(R.string.please_wait_collecting_data))
-            } else {
-                downloadTask.cancel(true)
-            }
-        }
-    }
-
     override fun onDestroy() {
+        if (taskId != -1L) {
+            val task = Aria.download(this).load(taskId)
+            task.cancel(true)
+            task.removeRecord()
+        }
         Aria.download(this).unRegister()
         super.onDestroy()
     }

@@ -12,7 +12,6 @@ import java.util.*
 @Entity(tableName = "torrent_table")
 data class TorrentEntity(
     @PrimaryKey val hash: String,
-    val state: TorrentState,
     val path: String,
     val magnet: String,
     val createDate: Date,
@@ -31,7 +30,6 @@ data class TorrentEntity(
         t.priorities = priority
         t.fastResumeData = fastResume
         t.source = source
-        t.state = state
         t.createDate = createDate
         t.hasError = hasError
         t.errorMsg = errorMsg
