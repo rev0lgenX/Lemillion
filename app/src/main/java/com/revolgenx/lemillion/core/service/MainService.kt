@@ -55,6 +55,40 @@ class MainService : Service() {
     private val bookRepository by inject<BookRepository>()
 
     private val torrentActiveState by inject<TorrentActiveState>()
+<<<<<<< HEAD
+=======
+
+//    private val runnable = object : Runnable {
+//        override fun run() {
+//            if (torrentHashMap.isEmpty()) return
+//
+//            synchronized(torrentHashMap) {
+//                val torrents = torrentHashMap.values.iterator()
+//
+//                torrents.forEach { torrent ->
+//                    when (torrent.status) {
+//                        TorrentStatus.SEEDING, TorrentStatus.DOWNLOADING, TorrentStatus.QUEUE, TorrentStatus.CHECKING -> {
+//                            torrent.update()
+//                        }
+//                        else -> {
+////                        torrentHashMap.remove(torrent.hash)
+//                            torrents.remove()
+//                            torrent.update()
+//                            CoroutineScope(Dispatchers.IO).launch {
+//                                torrentRepository.update(torrent)
+//                            }
+//                        }
+//                    }
+//                    postEvent(UpdateTorrentEvent(torrent.hash))
+//                }
+//
+//                checkIfServiceIsEmpty()
+//                handler.postDelayed(this, torrentUpdateTime)
+//            }
+//
+//        }
+//    }
+>>>>>>> fix torrent engine stop when downloading files completes
 
     //for any error
     private val runnable = object : Runnable {
@@ -124,9 +158,13 @@ class MainService : Service() {
     fun torrentEvent(event: TorrentEvent) {
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed(runnable, 2000)
+<<<<<<< HEAD
         handler.postDelayed(notifRunnable, 1000L)
 
         torrentActiveState.serviceActive = true
+=======
+        torrentActiveState.active = true
+>>>>>>> fix torrent engine stop when downloading files completes
         when (event.type) {
             TorrentEventType.TORRENT_RESUMED -> {
                 synchronized(torrentHashMap) {
@@ -272,7 +310,11 @@ class MainService : Service() {
         val bookIsEmpty = isBookEmpty()
 
         if (torrentIsEmpty) {
+<<<<<<< HEAD
             torrentActiveState.serviceActive = false
+=======
+            torrentActiveState.active = false
+>>>>>>> fix torrent engine stop when downloading files completes
         }
 
         if (torrentIsEmpty && bookIsEmpty) {
@@ -288,6 +330,7 @@ class MainService : Service() {
         CoroutineScope(Dispatchers.IO).launch {
             handler.removeCallbacksAndMessages(null)
             unregisterClass(this)
+<<<<<<< HEAD
             torrentHashMap.values.pmap {
                 val torrent = it
                 torrent.pause()
@@ -299,6 +342,14 @@ class MainService : Service() {
             bookHashMap.clear()
             if (!torrentActiveState.fragmentActive) {
                 torrentEngine.stop()
+=======
+            if (torrentHashMap.isNotEmpty()) {
+                torrentHashMap.forEach {
+                    val torrent = it.value
+                    torrent.pause()
+                    torrentRepository.update(torrent)
+                }
+>>>>>>> fix torrent engine stop when downloading files completes
             }
             stopSelf()
         }

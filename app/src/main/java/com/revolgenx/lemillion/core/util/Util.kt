@@ -65,6 +65,7 @@ suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineSco
     map { async { f(it) } }.awaitAll()
 }
 
+<<<<<<< HEAD
 fun Context.copyToClipBoard(str: String) {
     val clipboard: ClipboardManager =
         ContextCompat.getSystemService<ClipboardManager>(this, ClipboardManager::class.java)!!
@@ -74,6 +75,11 @@ fun Context.copyToClipBoard(str: String) {
 }
 
 
+=======
+
+inline fun Context.dip(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+inline fun Context.dp(value: Int): Float = (value * resources.displayMetrics.density)
+>>>>>>> fix torrent engine stop when downloading files completes
 
 
 

@@ -244,8 +244,12 @@ class TorrentFragment :
 
 
     override fun onDestroy() {
+<<<<<<< HEAD
         adapter.currentList.forEach { it.removeAllListener() }
         if ((!rotating && !torrentActiveState.serviceActive) || forceShutdown) {
+=======
+        if (!rotating && !torrentActiveState.active) {
+>>>>>>> fix torrent engine stop when downloading files completes
             torrentEngine.stop()
         }
         unregisterClass(this)
