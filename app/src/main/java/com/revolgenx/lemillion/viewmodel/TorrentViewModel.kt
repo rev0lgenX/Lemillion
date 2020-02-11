@@ -87,7 +87,8 @@ class TorrentViewModel(
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onTorrentRemovedEvent(event: TorrentRemovedEvent) {
         viewModelScope.launch(Dispatchers.IO) {
-            val torrents = event.hashes.map { torrentHashMap[it]!! }
+            val torrents =
+                event.hashes.filter { torrentHashMap[it] != null }.map { torrentHashMap[it]!! }
             val resource = torrentRepository.removeAllWithIds(torrents)
 
             if (resource.status == Status.SUCCESS) {
@@ -127,9 +128,11 @@ class TorrentViewModel(
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onUpdateDatabase(event: UpdateDataBase) {
+        if (context.isServiceRunning()) return
+
         viewModelScope.launch(Dispatchers.IO) {
             val data = event.data
-            if (data is Torrent && !context.isServiceRunning()) {
+            if (data is Torrent) {
                 torrentRepository.update(data)
             }
         }
@@ -240,7 +243,7 @@ class TorrentViewModel(
     fun recheckTorrents(selectedHashes: List<String>) {
         val torrents = selectedHashes.mapNotNull { torrentHashMap[it] }.toList()
         torrents.forEach {
-            it.recheck()
+            it.forceRecheck()
             it.update()
         }
 

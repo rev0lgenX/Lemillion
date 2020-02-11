@@ -24,10 +24,7 @@ import com.revolgenx.lemillion.core.exception.TorrentPauseException
 import com.revolgenx.lemillion.core.exception.TorrentResumeException
 import com.revolgenx.lemillion.core.service.isServiceRunning
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSortingComparator
-import com.revolgenx.lemillion.core.torrent.Torrent
-import com.revolgenx.lemillion.core.torrent.TorrentEngine
-import com.revolgenx.lemillion.core.torrent.TorrentProgressListener
-import com.revolgenx.lemillion.core.torrent.TorrentState
+import com.revolgenx.lemillion.core.torrent.*
 import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.event.*
 import com.revolgenx.lemillion.fragment.BaseRecyclerFragment
@@ -52,6 +49,7 @@ class TorrentFragment :
     private var query = ""
 
     private val torrentEngine by inject<TorrentEngine>()
+    private val torrentActiveState by inject<TorrentActiveState>()
     private val viewModel by viewModel<TorrentViewModel>()
 
     private var iconColorInverse = -1
@@ -233,7 +231,7 @@ class TorrentFragment :
 
 
     override fun onDestroy() {
-        if (!rotating && !context!!.isServiceRunning()) {
+        if (!rotating && !torrentActiveState.active) {
             torrentEngine.stop()
         }
         adapter.currentList.forEach { it.removeAllListener() }
