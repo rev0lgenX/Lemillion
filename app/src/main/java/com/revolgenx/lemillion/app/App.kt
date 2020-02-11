@@ -3,7 +3,10 @@ package com.revolgenx.lemillion.app
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import com.arialyy.aria.core.Aria
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.revolgenx.lemillion.BuildConfig
 import com.revolgenx.lemillion.core.coreModules
+import com.revolgenx.lemillion.debug.LemillionTree
 import com.revolgenx.lemillion.viewmodel.viewModelModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.loadKoinModules
@@ -25,17 +28,21 @@ class App : MultiDexApplication() {
             downloadConfig.reTryNum = 5
         }
 
-        Timber.plant(Timber.DebugTree())
+        if (BuildConfig.DEBUG) {
+            Timber.plant(LemillionTree(), Timber.DebugTree())
+//            FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled()
+        }
+
+
         startKoin {
             androidContext(this@App)
             loadKoinModules(
-                    listOf(
-                            coreModules,
-                            viewModelModule
-                    )
+                listOf(
+                    coreModules,
+                    viewModelModule
+                )
             )
         }
-
 
     }
 

@@ -194,7 +194,7 @@ class Book() : Parcelable {
         update(task)
     }
 
-    private fun checkTaskValidity(task: DownloadTask?) = task != null && task.entity?.id == id
+    private fun checkTaskValidity(task: DownloadTask?) = task != null && task.entity?.id == id && task.entity?.id != -1L
 
     @Download.onPre
     fun onPre(task: DownloadTask?) {
