@@ -8,6 +8,11 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
+import com.revolgenx.lemillion.core.util.pmap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 
@@ -65,7 +70,12 @@ class ServiceConnector(private val context: Context) : ServiceConnection {
     }
 }
 
-fun Context.isServiceRunning() =
-    (getSystemService(ACTIVITY_SERVICE) as ActivityManager)
-        .getRunningServices(Integer.MAX_VALUE)
-        .any { MainService::class.java.name == it.service.className }
+fun Context.isServiceRunning(): Boolean {
+    return runBlocking {
+        return@runBlocking (getSystemService(ACTIVITY_SERVICE) as ActivityManager)
+            .getRunningServices(Integer.MAX_VALUE)
+            .pmap { if (MainService::class.java.name == it.service.className) it.service.className else null }
+            .filterNotNull()
+            .isNotEmpty()
+    }
+}

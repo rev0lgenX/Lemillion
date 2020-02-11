@@ -39,10 +39,10 @@ class Book() : Parcelable {
     var id: Long = -1
     var entity: DownloadEntity? = null
         get() {
-            return if(field == null){
+            return if (field == null) {
                 field = Aria.download(this).load(id).entity
                 field
-            }else field
+            } else field
         }
     var listeners: MutableList<BookProgressListener> = mutableListOf()
     var bookProtocol = BookProtocol.UNKNOWN
@@ -107,6 +107,7 @@ class Book() : Parcelable {
 
     fun resume() {
 
+        if(!checkValidity()) return
 
         hasError = false
         errorMsg = ""
@@ -128,6 +129,8 @@ class Book() : Parcelable {
     }
 
     fun stop() {
+        if(!checkValidity()) return
+
         when (bookProtocol) {
             BookProtocol.HTTP -> {
                 Aria.download(this).load(id).stop()
@@ -187,14 +190,17 @@ class Book() : Parcelable {
     }
 
 
+    fun checkTaskValidity(task: DownloadTask?) =
+        task != null && task.entity?.id == id && task.entity?.id != -1L
+
+    fun checkValidity() = entity != null && id != -1L
+
     @Download.onWait
     fun onWait(task: DownloadTask?) {
         if (!checkTaskValidity(task)) return
         postEvent(BookEvent(listOf(this), BookEventType.BOOK_RESUMED))
         update(task)
     }
-
-    private fun checkTaskValidity(task: DownloadTask?) = task != null && task.entity?.id == id && task.entity?.id != -1L
 
     @Download.onPre
     fun onPre(task: DownloadTask?) {

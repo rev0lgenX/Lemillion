@@ -100,6 +100,8 @@ class BookViewModel(
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onBookAddedEvent(event: BookAddedEvent) {
+        if(event.book.id == -1L) return
+
         viewModelScope.launch(Dispatchers.IO) {
             val book = event.book
             bookRepository.add(book)
@@ -112,11 +114,9 @@ class BookViewModel(
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onBookRemovedEvent(event: BookRemovedEvent) {
-        if(event.ids.none { it != -1L }) return
-
         synchronized(bookHashMap) {
             viewModelScope.launch {
-                event.ids.forEach { id ->
+                event.ids.filter { it!= -1L }.forEach { id ->
                     bookHashMap[id]?.let {
                         it.remove(event.withFiles)
                         bookRepository.remove(it)

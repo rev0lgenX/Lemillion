@@ -16,6 +16,7 @@ import com.revolgenx.lemillion.core.book.Book
 import com.revolgenx.lemillion.core.db.book.BookRepository
 import com.revolgenx.lemillion.core.db.torrent.TorrentRepository
 import com.revolgenx.lemillion.core.torrent.Torrent
+import com.revolgenx.lemillion.core.torrent.TorrentActiveState
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.util.registerClass
 import com.revolgenx.lemillion.core.util.unregisterClass
@@ -47,6 +48,8 @@ class MainService : Service() {
     private val torrentEngine by inject<TorrentEngine>()
     private val torrentRepository by inject<TorrentRepository>()
     private val bookRepository by inject<BookRepository>()
+
+    private val torrentActiveState by inject<TorrentActiveState>()
 
 //    private val runnable = object : Runnable {
 //        override fun run() {
@@ -122,11 +125,16 @@ class MainService : Service() {
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun torrentEvent(event: TorrentEvent) {
         handler.postDelayed(runnable, 2000)
+        torrentActiveState.active = true
         when (event.type) {
             TorrentEventType.TORRENT_RESUMED -> {
                 synchronized(torrentHashMap) {
                     event.torrents.forEach { torrent ->
                         torrentHashMap[torrent.hash] = torrent
+                    }
+
+                    event.torrents.filter { !it.checkValidity() }.forEach { torrent ->
+                        torrentHashMap.remove(torrent.hash)
                     }
                 }
             }
@@ -140,6 +148,7 @@ class MainService : Service() {
                     event.torrents.forEach { torrent ->
                         torrentHashMap.remove(torrent.hash)
                     }
+
                     checkIfServiceIsEmpty()
                 }
             }
@@ -179,8 +188,11 @@ class MainService : Service() {
         when (event.bookEventType) {
             BookEventType.BOOK_RESUMED -> {
                 synchronized(bookHashMap) {
-                    event.books.forEach { book ->
+                    event.books.filter { it.checkValidity() }.forEach { book ->
                         bookHashMap[book.entity!!.id] = book
+                    }
+                    event.books.filter { !it.checkValidity() }.forEach { book ->
+                        bookHashMap.remove(book.entity!!.id)
                     }
                 }
             }
@@ -261,8 +273,7 @@ class MainService : Service() {
         val bookIsEmtpy = bookHashMap.isEmpty()
 
         if (torrentIsEmpty) {
-            handler.removeCallbacksAndMessages(null)
-            Timber.d("stopping service empty torrent")
+            torrentActiveState.active = false
         }
 
         if (torrentIsEmpty && bookIsEmtpy) {
@@ -274,6 +285,7 @@ class MainService : Service() {
     private fun stopService() {
         CoroutineScope(Dispatchers.IO).launch {
             handler.removeCallbacksAndMessages(null)
+            unregisterClass(this)
             if (torrentHashMap.isNotEmpty()) {
                 torrentHashMap.forEach {
                     val torrent = it.value

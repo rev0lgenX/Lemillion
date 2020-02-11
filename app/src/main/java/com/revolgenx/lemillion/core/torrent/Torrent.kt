@@ -339,6 +339,13 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
         update()
     }
 
+    fun forceRecheck() {
+        if (!checkValidity()) return
+        handle!!.forceRecheck()
+        resume(true)
+        update()
+    }
+
 
     override fun types(): IntArray = intArrayOf(
         AlertType.ADD_TORRENT.swig(),
@@ -424,7 +431,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
                     Timber.d("saving done ${System.currentTimeMillis()}")
                     fastResumeData =
                         Vectors.byte_vector2bytes(add_torrent_params.write_resume_data((alert as SaveResumeDataAlert).params().swig()).bencode())
-
+                    postEvent(UpdateDataBase(this))
                 } catch (e: Exception) {
 
                 }
