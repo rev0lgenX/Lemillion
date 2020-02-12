@@ -170,9 +170,7 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
             }
         })
 
-        if (savedInstanceState == null) {
-            viewModel.getBooks()
-        }
+        viewModel.getBooks()
 
     }
 

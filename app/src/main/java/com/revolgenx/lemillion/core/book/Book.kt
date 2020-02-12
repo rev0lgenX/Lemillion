@@ -56,8 +56,8 @@ class Book() : Parcelable {
     val totalSize: Long
         get() = entity!!.fileSize
 
-    val progress: Long
-        get() = entity!!.currentProgress
+    val progress: Float
+        get() = entity!!.percent.toFloat()
 
     val stopTime: Long
         get() = entity!!.stopTime

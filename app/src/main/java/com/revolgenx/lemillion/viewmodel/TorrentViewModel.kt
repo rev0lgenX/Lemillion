@@ -206,23 +206,22 @@ class TorrentViewModel(
             if (context.isServiceRunning()) {
                 connector.connect { service, connected ->
                     if (connected) {
-
                         connector.serviceConnectionListener = null
-
                         service!!.torrentHashMap.forEach {
                             torrentHashMap[it.value.hash] = it.value
                         }
                         viewModelScope.launch(Dispatchers.IO) {
                             val resource =
-                                torrentRepository.getAllNotIn(service.torrentHashMap.values.map { it.hash })
+                                torrentRepository.getAllNotIn(torrentHashMap.values.pmap{ it.hash })
+
                             resource.data!!.forEach { torrent ->
                                 torrentHashMap[torrent.hash] = torrent
                             }
 
-                            resource.data.filter { !it.isPaused() }.takeIf { it.isNotEmpty() }
-                                ?.let {
-                                    postEvent(TorrentEvent(it, TorrentEventType.TORRENT_RESUMED))
-                                }
+//                            resource.data.filter { !it.isPaused() }.let {
+//                                    postEvent(TorrentEvent(it, TorrentEventType.TORRENT_RESUMED))
+//                                }
+
                             updateResource()
                         }
                         connector.disconnect()
@@ -233,7 +232,7 @@ class TorrentViewModel(
                 val resource = torrentRepository.getAll()
                 if (resource.status == Status.SUCCESS) {
                     resource.data!!.forEach { torrent -> torrentHashMap[torrent.hash] = torrent }
-                    torrentResource.postValue(resource)
+                    updateResource()
                     Timber.d("service not running")
                 } else {
                     torrentResource.postValue(resource)

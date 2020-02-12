@@ -32,13 +32,15 @@ class MainService : Service() {
     private val binder = LocalBinder()
     private var notifyManager: NotificationManager? = null
 
-    private val serviceStartedNotifId: Int = 1
+    private val serviceStartedNotifId: Int = 1000
     private val foregroundChanId = "com.revolgenx.lemillion.FOREGROUND_DEFAULT_CHAN_ID"
     private val defChanId = "com.revolgenx.lemillion.DEFAULT_CHAN_ID"
     private val channelName = "lemillion_channel_1"
     private val channelName1 = "lemillion_channel_2"
     private var foregroundNotification: NotificationCompat.Builder? = null
+    private var startupPendingIntent:PendingIntent? = null
     private val handler = Handler()
+
 
     val torrentHashMap = mutableMapOf<String, Torrent>()
     val bookHashMap = mutableMapOf<Long, Book>()
@@ -79,21 +81,13 @@ class MainService : Service() {
     override fun onCreate() {
         super.onCreate()
         Timber.d("oncreate")
-        notifyManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager?
-        makeNotifyChans(notifyManager)
+        notifyManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        makeNotifyChans()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Timber.d("onstartcommand")
         registerClass(this)
-
-        try {
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.cancelAll()
-        } catch (e: SecurityException) {
-
-        }
-
         makeForegroundNotify()
         return START_NOT_STICKY
     }
@@ -189,8 +183,8 @@ class MainService : Service() {
             }
 
             BookEventType.BOOK_COMPLETED -> {
-                makeCompletedNotification(event.books)
                 synchronized(bookHashMap) {
+                    makeCompletedNotification(event.books)
                     event.books.forEach { book ->
                         bookHashMap.remove(book.entity!!.id)
                     }
@@ -290,20 +284,27 @@ class MainService : Service() {
     }
 
     //notification
-    private fun makeNotifyChans(notifyManager: NotificationManager?) {
+    private fun makeNotifyChans() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return
 
         val chans = mutableListOf<NotificationChannel>()
-        val defaultChan = NotificationChannel(defChanId, channelName, NotificationManager.IMPORTANCE_DEFAULT)
+        val defaultChan =
+            NotificationChannel(defChanId, channelName, NotificationManager.IMPORTANCE_DEFAULT)
         defaultChan.enableVibration(true)
         defaultChan.vibrationPattern = longArrayOf(1000) /* ms */
         defaultChan.enableLights(true)
         defaultChan.lightColor = Color.WHITE
 
         chans.add(defaultChan)
-        chans.add(NotificationChannel(foregroundChanId, channelName1, NotificationManager.IMPORTANCE_DEFAULT))
-        notifyManager?.createNotificationChannels(chans)
+        chans.add(
+            NotificationChannel(
+                foregroundChanId,
+                channelName1,
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+        )
+        notifyManager!!.createNotificationChannels(chans)
     }
 
     private fun makeForegroundNotify() {
@@ -311,9 +312,9 @@ class MainService : Service() {
         val startupIntent = Intent(applicationContext, MainActivity::class.java)
         startupIntent.action = Intent.ACTION_MAIN
         startupIntent.addCategory(Intent.CATEGORY_LAUNCHER)
-        startupIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+//        startupIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
-        val startupPendingIntent = PendingIntent.getActivity(
+        startupPendingIntent = PendingIntent.getActivity(
             applicationContext,
             0,
             startupIntent,
@@ -364,6 +365,9 @@ class MainService : Service() {
             .setDefaults(Notification.DEFAULT_VIBRATE)
             .setLights(color(R.color.colorPrimary), 1000, 1000)
             .setCategory(Notification.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .setContentIntent(startupPendingIntent)
+
 
         if (list is List<*>) {
             list.forEach { obj ->
@@ -385,6 +389,8 @@ class MainService : Service() {
             .setDefaults(Notification.DEFAULT_VIBRATE)
             .setLights(color(R.color.colorPrimary), 1000, 1000)
             .setCategory(Notification.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .setContentIntent(startupPendingIntent)
 
         if (list is List<*>) {
             list.forEach { obj ->
@@ -412,7 +418,7 @@ class MainService : Service() {
             inboxStyle.addLine("(T)" + "·" + it.name + " · " + it.downloadSpeed.formatSpeed() + " · " + it.progress.formatProgress())
         }
         bookHashMap.values.take(3).forEach {
-            inboxStyle.addLine("(F)" + "·" + it.name + " · " + it.speed.formatSpeed() + " · " + it.progress.toFloat().formatProgress())
+            inboxStyle.addLine("(F)" + "·" + it.name + " · " + it.speed.formatSpeed() + " · " + it.progress.formatProgress())
         }
         return inboxStyle
     }

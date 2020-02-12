@@ -127,12 +127,10 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
             if (handle == null) return TorrentState.UNKNOWN
 
             val state = handle!!.status()
-            return if (isPausedWithState()) {
-                TorrentState.PAUSED
-            } else if (isPausedWithState() && state.isFinished)
+            return if (isPausedWithState() && state.isFinished)
                 TorrentState.COMPLETED
             else if (isPausedWithState() && !state.isFinished)
-                TorrentState.PAUSED;
+                TorrentState.PAUSED
             else if (!isPausedWithState() && state.isFinished)
                 TorrentState.SEEDING
             else when (state.state()) {
@@ -271,7 +269,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
         if (!checkValidity()) throw TorrentPauseException("invalid torrent session", null)
 
         if (saveResumeCounter > 4 && !force)
-            throw TorrentResumeException("Saving data, please wait", null)
+            throw TorrentPauseException("Saving data, please wait", null)
 
 
         handle!!.unsetFlags(TorrentFlags.AUTO_MANAGED)
@@ -284,7 +282,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
     }
 
     fun remove(withFiles: Boolean) {
-        if (handle != null) {
+        if (checkValidity()) {
             removeAllListener()
             if (withFiles)
                 engine.remove(handle, SessionHandle.DELETE_FILES)

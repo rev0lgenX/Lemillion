@@ -28,7 +28,8 @@
 
         <receiver android:name=".core.receiver.NotificationReceiver"/>
 
-        <activity android:name="com.revolgenx.lemillion.activity.MainActivity">
+        <activity android:name="com.revolgenx.lemillion.activity.MainActivity"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

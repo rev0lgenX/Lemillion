@@ -492,27 +492,4 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    inner class MainPagerAdapter(fragmentManager: FragmentManager) :
-        FragmentPagerAdapter(fragmentManager) {
-        override fun getItem(position: Int): Fragment {
-            return when (position) {
-                0 -> {
-                    TorrentFragment.newInstance()
-                }
-                1 -> {
-                    BookFragment.newInstance()
-                }
-                else -> Fragment()
-            }
-        }
-
-        override fun getCount(): Int = 2
-        override fun getPageTitle(position: Int): CharSequence? = when (position) {
-            0 -> getString(R.string.torrent)
-            1 -> getString(R.string.file)
-            else -> ""
-        }
-    }
-
-
 }
