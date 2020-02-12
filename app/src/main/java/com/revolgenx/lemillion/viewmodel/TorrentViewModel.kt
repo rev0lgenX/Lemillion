@@ -15,6 +15,7 @@ import com.revolgenx.lemillion.core.sorting.BaseSorting
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSorting
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSortingComparator
 import com.revolgenx.lemillion.core.torrent.Torrent
+import com.revolgenx.lemillion.core.torrent.TorrentActiveState
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.event.*
@@ -29,7 +30,8 @@ class TorrentViewModel(
     private val context: Context,
     private val torrentRepository: TorrentRepository,
     private val engine: TorrentEngine,
-    private val connector: ServiceConnector
+    private val connector: ServiceConnector,
+    private val torrentActiveState: TorrentActiveState
 ) : ViewModel() {
 
     private val torrentHashMap = mutableMapOf<String, Torrent>()
@@ -53,6 +55,7 @@ class TorrentViewModel(
     init {
         registerClass(this)
         hd = Handler(Looper.getMainLooper())
+        torrentActiveState.fragmentActive = true
     }
 
 
@@ -274,6 +277,7 @@ class TorrentViewModel(
         unregisterClass(this)
         torrentHashMap.clear()
         connector.disconnect()
+        torrentActiveState.fragmentActive = false
         super.onCleared()
     }
 

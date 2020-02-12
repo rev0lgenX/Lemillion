@@ -15,16 +15,13 @@ import com.revolgenx.lemillion.activity.MainActivity
 import com.revolgenx.lemillion.core.book.Book
 import com.revolgenx.lemillion.core.db.book.BookRepository
 import com.revolgenx.lemillion.core.db.torrent.TorrentRepository
+import com.revolgenx.lemillion.core.receiver.NotificationReceiver
 import com.revolgenx.lemillion.core.torrent.Torrent
 import com.revolgenx.lemillion.core.torrent.TorrentActiveState
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
-import com.revolgenx.lemillion.core.util.registerClass
-import com.revolgenx.lemillion.core.util.unregisterClass
+import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.event.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.koin.android.ext.android.inject
@@ -36,11 +33,11 @@ class MainService : Service() {
     private var notifyManager: NotificationManager? = null
 
     private val serviceStartedNotifId: Int = 1
-    private val foregroundChanId = "revolgenx.com.weaverx.FOREGROUND_DEFAULT_CHAN_ID"
-    private val defChanId = "revolgenx.com.weaverx.DEFAULT_CHAN_ID"
-    private var foregroundNotify: NotificationCompat.Builder? = null
-    private val torrentUpdateTime = 1000L
-    private val saveTimeDelay = 5000L
+    private val foregroundChanId = "com.revolgenx.lemillion.FOREGROUND_DEFAULT_CHAN_ID"
+    private val defChanId = "com.revolgenx.lemillion.DEFAULT_CHAN_ID"
+    private val channelName = "lemillion_channel_1"
+    private val channelName1 = "lemillion_channel_2"
+    private var foregroundNotification: NotificationCompat.Builder? = null
     private val handler = Handler()
 
     val torrentHashMap = mutableMapOf<String, Torrent>()
@@ -51,41 +48,22 @@ class MainService : Service() {
 
     private val torrentActiveState by inject<TorrentActiveState>()
 
-//    private val runnable = object : Runnable {
-//        override fun run() {
-//            if (torrentHashMap.isEmpty()) return
-//
-//            synchronized(torrentHashMap) {
-//                val torrents = torrentHashMap.values.iterator()
-//
-//                torrents.forEach { torrent ->
-//                    when (torrent.status) {
-//                        TorrentStatus.SEEDING, TorrentStatus.DOWNLOADING, TorrentStatus.QUEUE, TorrentStatus.CHECKING -> {
-//                            torrent.update()
-//                        }
-//                        else -> {
-////                        torrentHashMap.remove(torrent.hash)
-//                            torrents.remove()
-//                            torrent.update()
-//                            CoroutineScope(Dispatchers.IO).launch {
-//                                torrentRepository.update(torrent)
-//                            }
-//                        }
-//                    }
-//                    postEvent(UpdateTorrentEvent(torrent.hash))
-//                }
-//
-//                checkIfServiceIsEmpty()
-//                handler.postDelayed(this, torrentUpdateTime)
-//            }
-//
-//        }
-//    }
 
+    //for any error
     private val runnable = object : Runnable {
         override fun run() {
             checkIfServiceIsEmpty()
             handler.postDelayed(this, 2000)
+        }
+    }
+
+    //for updating notification
+    private val notifRunnable = object : Runnable {
+        override fun run() {
+            if (isTorrentEmpty() && isBookEmpty()) return
+
+            updateNotification()
+            handler.postDelayed(this, 1000L)
         }
     }
 
@@ -124,8 +102,11 @@ class MainService : Service() {
     //TODO://CHECK FOR DIFFERENT EVENTS
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun torrentEvent(event: TorrentEvent) {
+        handler.removeCallbacksAndMessages(null)
         handler.postDelayed(runnable, 2000)
-        torrentActiveState.active = true
+        handler.postDelayed(notifRunnable, 1000L)
+
+        torrentActiveState.serviceActive = true
         when (event.type) {
             TorrentEventType.TORRENT_RESUMED -> {
                 synchronized(torrentHashMap) {
@@ -153,16 +134,16 @@ class MainService : Service() {
                 }
             }
             TorrentEventType.TORRENT_FINISHED -> {
-                //todo:send notification
                 synchronized(torrentHashMap) {
+                    makeCompletedNotification(event.torrents)
                     CoroutineScope(Dispatchers.IO).launch {
                         torrentRepository.updateAll(event.torrents)
                     }
                 }
             }
             TorrentEventType.TORRENT_ERROR -> {
-                //todo:send notification
                 synchronized(torrentHashMap) {
+                    makeErrorNotification(event.torrents)
                     CoroutineScope(Dispatchers.IO).launch {
                         torrentRepository.updateAll(event.torrents)
                     }
@@ -184,7 +165,9 @@ class MainService : Service() {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onBookEvent(event: BookEvent) {
+        handler.removeCallbacksAndMessages(null)
         handler.postDelayed(runnable, 2000)
+        handler.postDelayed(notifRunnable, 1000L)
         when (event.bookEventType) {
             BookEventType.BOOK_RESUMED -> {
                 synchronized(bookHashMap) {
@@ -206,7 +189,7 @@ class MainService : Service() {
             }
 
             BookEventType.BOOK_COMPLETED -> {
-                //todo:notification
+                makeCompletedNotification(event.books)
                 synchronized(bookHashMap) {
                     event.books.forEach { book ->
                         bookHashMap.remove(book.entity!!.id)
@@ -223,9 +206,11 @@ class MainService : Service() {
                 }
             }
             BookEventType.BOOK_FAILED -> {
-                //todo:notification
-                event.books.forEach {
-                    removeBook(it.id)
+                synchronized(bookHashMap) {
+                    makeErrorNotification(event.books)
+                    event.books.forEach {
+                        removeBook(it.id)
+                    }
                 }
             }
         }
@@ -252,11 +237,6 @@ class MainService : Service() {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onShutdownEvent(event: ShutdownEvent) {
-//        Libtorrent.pause()
-        torrentHashMap.values.forEach { it.pause() }
-        torrentHashMap.clear()
-        Aria.download(this).stopAllTask()
-        bookHashMap.clear()
         stopService()
     }
 
@@ -267,31 +247,38 @@ class MainService : Service() {
     }
 
 
-    //TODO CHECK FOR FILES EMPTINESS
     private fun checkIfServiceIsEmpty() {
-        val torrentIsEmpty = torrentHashMap.isEmpty()
-        val bookIsEmtpy = bookHashMap.isEmpty()
+        val torrentIsEmpty = isTorrentEmpty()
+        val bookIsEmpty = isBookEmpty()
 
         if (torrentIsEmpty) {
-            torrentActiveState.active = false
+            torrentActiveState.serviceActive = false
         }
 
-        if (torrentIsEmpty && bookIsEmtpy) {
+        if (torrentIsEmpty && bookIsEmpty) {
             stopService()
         }
     }
+
+    private fun isTorrentEmpty() = torrentHashMap.isEmpty()
+    private fun isBookEmpty() = bookHashMap.isEmpty()
 
 
     private fun stopService() {
         CoroutineScope(Dispatchers.IO).launch {
             handler.removeCallbacksAndMessages(null)
             unregisterClass(this)
-            if (torrentHashMap.isNotEmpty()) {
-                torrentHashMap.forEach {
-                    val torrent = it.value
-                    torrent.pause()
-                    torrentRepository.update(torrent)
-                }
+            torrentHashMap.values.pmap {
+                val torrent = it
+                torrent.pause()
+            }
+            delay(100)
+            torrentRepository.updateAll(torrentHashMap.values.toList())
+            torrentHashMap.clear()
+            Aria.download(this).stopAllTask()
+            bookHashMap.clear()
+            if (!torrentActiveState.fragmentActive) {
+                torrentEngine.stop()
             }
             stopSelf()
         }
@@ -299,7 +286,6 @@ class MainService : Service() {
 
     override fun onLowMemory() {
         super.onLowMemory()
-
         stopService()
     }
 
@@ -309,26 +295,14 @@ class MainService : Service() {
             return
 
         val chans = mutableListOf<NotificationChannel>()
-        val defaultChan = NotificationChannel(
-            defChanId, "Default",
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-
-
+        val defaultChan = NotificationChannel(defChanId, channelName, NotificationManager.IMPORTANCE_DEFAULT)
         defaultChan.enableVibration(true)
         defaultChan.vibrationPattern = longArrayOf(1000) /* ms */
-
-
         defaultChan.enableLights(true)
-        defaultChan.lightColor = Color.BLUE
+        defaultChan.lightColor = Color.WHITE
 
         chans.add(defaultChan)
-        chans.add(
-            NotificationChannel(
-                foregroundChanId, getString(R.string.foreground_notification),
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-        )
+        chans.add(NotificationChannel(foregroundChanId, channelName1, NotificationManager.IMPORTANCE_DEFAULT))
         notifyManager?.createNotificationChannels(chans)
     }
 
@@ -346,30 +320,105 @@ class MainService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        foregroundNotify = NotificationCompat.Builder(
+        foregroundNotification = NotificationCompat.Builder(
             applicationContext,
             foregroundChanId
         )
             .setContentIntent(startupPendingIntent)
-            .setContentTitle(getString(R.string.foreground_notification))
+            .setContentTitle(getTitleNotifString())
+            .setStyle(notificationStyle())
+            .setContentText(getString(R.string.foreground_notification))
             .setTicker(getString(R.string.foreground_notification))
             .setWhen(System.currentTimeMillis())
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .addAction(makeShutdownAction())
+            .setCategory(Notification.CATEGORY_SERVICE)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            foregroundNotify!!.setSmallIcon(R.mipmap.ic_launcher)
-        } else {
-            foregroundNotify!!.setSmallIcon(R.mipmap.ic_launcher)
-        }
-
-//        foregroundNotify?.addAction(makeFuncButtonAction())
-//        foregroundNotify?.addAction(makeShutdownAction())
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            foregroundNotify!!.setCategory(Notification.CATEGORY_SERVICE)
-
-        /* Disallow killing the service process by system */
-        startForeground(serviceStartedNotifId, foregroundNotify!!.build())
+        startForeground(serviceStartedNotifId, foregroundNotification!!.build())
     }
+
+    private fun makeShutdownAction(): NotificationCompat.Action {
+        val shutdownIntent = Intent(applicationContext, NotificationReceiver::class.java).apply {
+            putExtra(NotificationReceiver.SHUTDOWN_ACTION_KEY, "shutdown")
+        }
+        return NotificationCompat.Action(
+            0,
+            getString(R.string.exit),
+            PendingIntent.getBroadcast(
+                applicationContext,
+                0,
+                shutdownIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        )
+    }
+
+
+    private fun makeCompletedNotification(list: Any) {
+        val builder = NotificationCompat.Builder(applicationContext, defChanId)
+            .setSmallIcon(R.drawable.ic_done)
+            .setColor(color(R.color.colorPrimary))
+            .setContentTitle(string(R.string.completed))
+            .setWhen(System.currentTimeMillis())
+            .setDefaults(Notification.DEFAULT_SOUND)
+            .setDefaults(Notification.DEFAULT_VIBRATE)
+            .setLights(color(R.color.colorPrimary), 1000, 1000)
+            .setCategory(Notification.CATEGORY_STATUS)
+
+        if (list is List<*>) {
+            list.forEach { obj ->
+                builder.setContentText(if (obj is Torrent) obj.name else (obj as? Book)?.name)
+                notifyManager!!.notify(
+                    if (obj is Torrent) obj.hashCode() else (obj as? Book)?.id.hashCode(),
+                    builder.build()
+                )
+            }
+        }
+    }
+
+    private fun makeErrorNotification(list: Any) {
+        val builder = NotificationCompat.Builder(applicationContext, defChanId)
+            .setSmallIcon(R.drawable.ic_error)
+            .setColor(color(R.color.colorPrimary))
+            .setWhen(System.currentTimeMillis())
+            .setDefaults(Notification.DEFAULT_SOUND)
+            .setDefaults(Notification.DEFAULT_VIBRATE)
+            .setLights(color(R.color.colorPrimary), 1000, 1000)
+            .setCategory(Notification.CATEGORY_STATUS)
+
+        if (list is List<*>) {
+            list.forEach { obj ->
+                builder.setContentTitle(if (obj is Torrent) obj.name else (obj as Book).name)
+                builder.setContentText(if (obj is Torrent) obj.errorMsg else (obj as Book).errorMsg)
+                notifyManager!!.notify(
+                    if (obj is Torrent) obj.hashCode() else (obj as Book).id.hashCode(),
+                    builder.build()
+                )
+            }
+        }
+    }
+
+
+    private fun updateNotification() {
+        foregroundNotification!!.setContentTitle(getTitleNotifString())
+        foregroundNotification!!.setStyle(notificationStyle())
+        notifyManager!!.notify(serviceStartedNotifId, foregroundNotification!!.build())
+    }
+
+
+    private fun notificationStyle(): NotificationCompat.Style {
+        val inboxStyle = NotificationCompat.InboxStyle()
+        torrentHashMap.values.take(3).forEach {
+            inboxStyle.addLine("(T)" + "·" + it.name + " · " + it.downloadSpeed.formatSpeed() + " · " + it.progress.formatProgress())
+        }
+        bookHashMap.values.take(3).forEach {
+            inboxStyle.addLine("(F)" + "·" + it.name + " · " + it.speed.formatSpeed() + " · " + it.progress.toFloat().formatProgress())
+        }
+        return inboxStyle
+    }
+
+    private fun getTitleNotifString() =
+        getString(R.string.service_title_format).format(torrentHashMap.size, bookHashMap.size)
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)

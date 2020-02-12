@@ -96,18 +96,16 @@ fun Long.formatRemainingTime(): String {
     return "$day:$hour:$minutes:$seconds"
 }
 
+fun Float.formatProgress() = String.format("%.1f%%", this)
+
 fun Context.color(@ColorRes id: Int) = ContextCompat.getColor(this, id)
+fun Context.string(@StringRes id: Int) = getString(id)
 fun Fragment.color(@ColorRes id: Int) = context!!.color(id)
 
 suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineScope {
     map { async { f(it) } }.awaitAll()
 }
 
-
-/*public inline fun <T> Iterable<T>.filter(predicate: (T) -> Boolean): List<T> {
-    return filterTo(ArrayList<T>(), predicate)
-}
-*/
 
 inline fun Context.dip(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 inline fun Context.dp(value: Int): Float = (value * resources.displayMetrics.density)

@@ -25,6 +25,9 @@
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning"
         tools:targetApi="q">
+
+        <receiver android:name=".core.receiver.NotificationReceiver"/>
+
         <activity android:name="com.revolgenx.lemillion.activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

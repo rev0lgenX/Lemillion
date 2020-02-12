@@ -22,7 +22,6 @@ import com.revolgenx.lemillion.activity.TorrentMetaActivity
 import com.revolgenx.lemillion.adapter.SelectableAdapter
 import com.revolgenx.lemillion.core.exception.TorrentPauseException
 import com.revolgenx.lemillion.core.exception.TorrentResumeException
-import com.revolgenx.lemillion.core.service.isServiceRunning
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSortingComparator
 import com.revolgenx.lemillion.core.torrent.*
 import com.revolgenx.lemillion.core.util.*
@@ -54,6 +53,8 @@ class TorrentFragment :
 
     private var iconColorInverse = -1
     private var iconColor = -1
+
+    private var forceShutdown = false
 
     private var actionMode: ActionMode? = null
     private var inActionMode = false
@@ -229,12 +230,17 @@ class TorrentFragment :
         }
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onShutdownEvent(event:ShutdownEvent){
+        forceShutdown = true
+    }
+
 
     override fun onDestroy() {
-        if (!rotating && !torrentActiveState.active) {
+        adapter.currentList.forEach { it.removeAllListener() }
+        if ((!rotating && !torrentActiveState.serviceActive) || forceShutdown) {
             torrentEngine.stop()
         }
-        adapter.currentList.forEach { it.removeAllListener() }
         unregisterClass(this)
         super.onDestroy()
     }
