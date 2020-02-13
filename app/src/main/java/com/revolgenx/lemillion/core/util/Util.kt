@@ -100,7 +100,6 @@ fun Float.formatProgress() = String.format("%.1f%%", this)
 
 fun Context.color(@ColorRes id: Int) = ContextCompat.getColor(this, id)
 fun Context.string(@StringRes id: Int) = getString(id)
-fun Fragment.color(@ColorRes id: Int) = context!!.color(id)
 
 suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineScope {
     map { async { f(it) } }.awaitAll()

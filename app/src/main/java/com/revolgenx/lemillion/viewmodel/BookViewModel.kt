@@ -157,8 +157,18 @@ class BookViewModel(
     }
 
     override fun onCleared() {
-        bookHashMap.values.forEach { it.unregister() }
-        bookHashMap.clear()
+        if(context.isServiceRunning()){
+            connector.connect { service, connected ->
+                if(connected){
+                    bookHashMap.filterNot { service?.bookHashMap!!.containsKey(it.value.id)}.values.forEach { it.unregister() }
+                }
+                connector.disconnect()
+                bookHashMap.clear()
+            }
+        }else{
+            bookHashMap.values.forEach { it.unregister() }
+            bookHashMap.clear()
+        }
         unregisterClass(this)
         super.onCleared()
     }

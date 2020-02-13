@@ -387,13 +387,14 @@ class TorrentFragment :
             @SuppressLint("SetTextI18n")
             private fun updateView() {
                 v.apply {
+                    if(context == null) return
                     torrentNameTv.text = torrent!!.name
                     val progress = torrent!!.progress
                     torrentProgressBar.progress = progress
                     torrentProgressBar.labelText = progress.toInt().toString()
 
                     if (torrent!!.hasError) {
-                        indicatorView.setBackgroundColor(color(R.color.errorColor))
+                        indicatorView.setBackgroundColor(context.color(R.color.errorColor))
                     }
                     val state = torrent!!.state
                     torrentFirstTv.text =
@@ -417,10 +418,10 @@ class TorrentFragment :
                     indicatorView.setBackgroundColor(
                         when (currentState) {
                             TorrentState.PAUSED -> {
-                                color(R.color.pausedColor)
+                                context.color(R.color.pausedColor)
                             }
                             TorrentState.UNKNOWN -> {
-                                color(R.color.red)
+                                context.color(R.color.red)
                             }
 
                             TorrentState.DOWNLOADING
@@ -430,14 +431,14 @@ class TorrentFragment :
                                 , TorrentState.DOWNLOADING_METADATA
                                 , TorrentState.ALLOCATING
                                 , TorrentState.CHECKING_RESUME_DATA -> {
-                                color(R.color.downloadingColor)
+                                context.color(R.color.downloadingColor)
                             }
 
                             TorrentState.SEEDING -> {
-                                color(R.color.seedingColor)
+                                context.color(R.color.seedingColor)
                             }
                             TorrentState.COMPLETED -> {
-                                color(R.color.completedColor)
+                                context.color(R.color.completedColor)
                             }
                         }
                     )

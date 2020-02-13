@@ -345,7 +345,7 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
             private fun updateView() {
                 v.apply {
                     if (book == null) return
-
+                    if(context == null) return
                     bookConstraintLayout.isSelected = isSelected(adapterPosition)
                     pageNameTv.text = book!!.entity!!.fileName
                     pageProgressBar.progress = book!!.entity!!.percent.toFloat()
@@ -354,19 +354,19 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                     indicatorView.setBackgroundColor(
                         when (book!!.state) {
                             IEntity.STATE_RUNNING, IEntity.STATE_PRE, IEntity.STATE_POST_PRE, IEntity.STATE_WAIT -> {
-                                color(R.color.downloadingColor)
+                                context.color(R.color.downloadingColor)
                             }
                             IEntity.STATE_CANCEL, IEntity.STATE_STOP -> {
-                                color(R.color.pausedColor)
+                                context.color(R.color.pausedColor)
                             }
                             IEntity.STATE_COMPLETE -> {
-                                color(R.color.completedColor)
+                                context.color(R.color.completedColor)
                             }
                             IEntity.STATE_FAIL -> {
-                                color(R.color.errorColor)
+                                context.color(R.color.errorColor)
                             }
                             else -> {
-                                color(R.color.gray)
+                                context.color(R.color.gray)
                             }
                         }
                     )
