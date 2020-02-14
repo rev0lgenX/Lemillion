@@ -111,6 +111,7 @@
         <item name="textAllCaps">false</item>
     </style>
 
+
     <style name="CustomToolbarTextAppearance" parent="Widget.AppCompat.Toolbar">
         <item name="android:fontFamily">@font/open_sans_regular</item>
         <item name="android:textColor">?android:textColorPrimary</item>
@@ -122,6 +123,13 @@
         <item name="android:fontFamily">@font/open_sans_regular</item>
         <item name="android:textColor">?android:textColorPrimary</item>
         <item name="android:textSize">18sp</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="SmallHeaderStyle" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/open_sans_light</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
+        <item name="android:textSize">12sp</item>
         <item name="textAllCaps">false</item>
     </style>
 

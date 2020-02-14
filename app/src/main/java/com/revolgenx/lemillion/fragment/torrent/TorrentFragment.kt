@@ -100,7 +100,7 @@ class TorrentFragment :
                 }
 
                 R.id.recheckTorrentItem -> {
-                    viewModel.recheckTorrents((adapter as TorrentRecyclerAdapter).getSelectedHashes())
+                    postEvent(TorrentRecheckEvent((adapter as TorrentRecyclerAdapter).getSelectedHashes()))
                     adapter.clearSelection()
                     inActionMode = false
                     true
@@ -142,7 +142,7 @@ class TorrentFragment :
 
                     R.id.recheckTorrentItem -> {
                         it.icon = AppCompatDrawableManager.get()
-                            .getDrawable(context!!, R.drawable.ic_check)
+                            .getDrawable(context!!, R.drawable.ic_recheck)
                             .apply { DrawableCompat.setTint(this, iconColor) }
                     }
                 }

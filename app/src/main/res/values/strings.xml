@@ -103,6 +103,14 @@
     <string name="service_title_format">Torrent %d | File %d</string>
     <string name="free">Free</string>
     <string name="low_space">Low space</string>
+    <string name="reannounce">Reannounce</string>
+    <string name="speed_limit">Speed limit</string>
+    <string name="add_tracker">Add tracker</string>
+    <string name="upload_speed">Upload Speed</string>
+    <string name="download_speed">Download Speed</string>
+    <string name="add_trackers">Add trackers</string>
+    <string name="add_space_between_trackers">Add space between trackers</string>
+    <string name="speed_limit_size_format">Speed limit (KB)</string>
 
 
     <string-array name="sort_array">

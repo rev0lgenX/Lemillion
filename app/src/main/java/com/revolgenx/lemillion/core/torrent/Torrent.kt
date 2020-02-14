@@ -164,6 +164,31 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
             }
         }
 
+    var uploadLimit: Int = 0
+        get() {
+            return if (checkValidity()) {
+                handle!!.uploadLimit
+            }else 0
+        }
+        set(value) {
+            field = value
+            if(checkValidity()){
+                handle!!.uploadLimit = field
+            }
+        }
+
+    var downloadLimit: Int = 0
+        get() {
+            return if (checkValidity()) {
+                handle!!.downloadLimit
+            }else 0
+        }
+        set(value) {
+            field = value
+            if(checkValidity()){
+                handle!!.downloadLimit = field
+            }
+        }
 
     val totalCompleted: Long
         get() {
@@ -565,6 +590,13 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
     fun forceReannounce() {
         if (!checkValidity()) return
         handle!!.forceReannounce()
+    }
+
+    fun torrentAddTracker(list: List<AnnounceEntry>) {
+        if (!checkValidity()) return
+        list.forEach {
+            handle!!.addTracker(it)
+        }
     }
 
 

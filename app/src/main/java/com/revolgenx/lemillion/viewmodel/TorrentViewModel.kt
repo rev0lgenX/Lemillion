@@ -213,7 +213,7 @@ class TorrentViewModel(
                         }
                         viewModelScope.launch(Dispatchers.IO) {
                             val resource =
-                                torrentRepository.getAllNotIn(torrentHashMap.values.pmap{ it.hash })
+                                torrentRepository.getAllNotIn(torrentHashMap.values.pmap { it.hash })
 
                             resource.data!!.forEach { torrent ->
                                 torrentHashMap[torrent.hash] = torrent
@@ -243,7 +243,9 @@ class TorrentViewModel(
     }
 
 
-    fun recheckTorrents(selectedHashes: List<String>) {
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun recheckTorrents(event: TorrentRecheckEvent) {
+        val selectedHashes = event.selectedHashes
         val torrents = selectedHashes.mapNotNull { torrentHashMap[it] }.toList()
         torrents.forEach {
             it.forceRecheck()

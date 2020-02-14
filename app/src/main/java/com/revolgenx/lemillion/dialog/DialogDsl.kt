@@ -3,9 +3,12 @@ package com.revolgenx.lemillion.dialog
 import android.content.ClipboardManager
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatDrawableManager
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.fragment.app.Fragment
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.WhichButton
@@ -24,6 +27,8 @@ import com.obsez.android.lib.filechooser.ChooserDialog
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.activity.MainActivity
 import com.revolgenx.lemillion.core.preference.*
+import com.revolgenx.lemillion.view.string
+import kotlinx.android.synthetic.main.input_layout.*
 import kotlinx.android.synthetic.main.input_layout.view.*
 import kotlinx.android.synthetic.main.setting_layout.*
 
@@ -35,6 +40,7 @@ fun Context.showErrorDialog(error: String) {
         positiveButton(R.string.ok)
     }
 }
+
 
 fun MainActivity.makeSettingDialog() {
     MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
@@ -104,15 +110,17 @@ fun MainActivity.openLinkInputDialog(prefill: String? = null) {
 }
 
 fun Context.showInputDialog(
-    titleRes: Int? = null,
+    @StringRes titleRes: Int? = null,
+    @StringRes hintRes: Int? = null,
     prefill: CharSequence? = null,
     callback: (text: String) -> Unit?
 ) {
     MaterialDialog(this).show {
         title(titleRes)
-        input(prefill = prefill) { materialDialog, charSequence ->
+        input(hintRes = hintRes, prefill = prefill) { materialDialog, charSequence ->
             callback.invoke(charSequence.toString())
         }
+
         getInputLayout().apply {
             typeface = ResourcesCompat.getFont(context, R.font.open_sans_regular)
         }
@@ -124,6 +132,7 @@ fun Context.showInputDialog(
 fun MaterialDialog.inputDialog(
     context: Context,
     prefill: CharSequence? = null,
+    hintRes: Int? = null,
     allowEmpty: Boolean = false,
     handleActionButton: Boolean = false,
     textChangeCallback: ((CharSequence) -> Unit)? = null,
@@ -152,6 +161,10 @@ fun MaterialDialog.inputDialog(
 
         if (prefill != null) {
             et.setText(prefill)
+        }
+
+        if (hintRes != null) {
+            inputLayout.hint = context.string(hintRes)
         }
 
         et.textChanged {
