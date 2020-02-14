@@ -1,8 +1,6 @@
 package com.revolgenx.lemillion.core.torrent
 
 import com.revolgenx.lemillion.core.exception.TorrentException
-import com.revolgenx.lemillion.core.exception.TorrentLoadException
-import com.revolgenx.lemillion.core.torrent.util.array2vector
 import com.revolgenx.lemillion.core.util.postEvent
 import com.revolgenx.lemillion.event.TorrentEngineEvent
 import com.revolgenx.lemillion.event.TorrentEngineEventTypes
@@ -144,7 +142,7 @@ class TorrentEngine : SessionManager() {
     }
 
 
-    @Throws(Exception::class)
+    @Throws(TorrentException::class)
     fun fetchMagnet(uri: String): TorrentHandle {
         val ec = error_code()
         val p = add_torrent_params.parse_magnet_uri(uri, ec)
@@ -158,7 +156,7 @@ class TorrentEngine : SessionManager() {
             try {
                 th = swig().find_torrent(hash)
                 if (th != null && th.is_valid) {
-                    throw TorrentLoadException("Torrent exists!!!", null)
+                    throw TorrentException("Torrent exists!!!", TorrentHandle(th))
                 }
 
                 if (p.name.isEmpty()) p.name = strHash
@@ -174,7 +172,7 @@ class TorrentEngine : SessionManager() {
             } finally {
                 syncMagnet.unlock()
             }
-        } catch (e: TorrentLoadException) {
+        } catch (e: TorrentException) {
             throw e
         } catch (e: Exception) {
             if (th != null && th.is_valid) swig().remove_torrent(th)
@@ -211,7 +209,7 @@ class TorrentEngine : SessionManager() {
     }
 
 
-    @Throws(TorrentLoadException::class)
+    @Throws(TorrentException::class)
     fun loadTorrent(
         ti: TorrentInfo,
         saveDir: File?,
@@ -224,17 +222,7 @@ class TorrentEngine : SessionManager() {
         }
         var th = swig().find_torrent(ti.swig().info_hash())
         var priorities = pri
-        if (th != null && th.is_valid) { // found a download with the same hash, just adjust the priorities if needed
-//            if (priorities != null) {
-//                require(ti.numFiles() == priorities.size) { "priorities count should be equals to the number of files" }
-//                th.prioritize_files2(array2vector(priorities))
-//            } else { // did they just add the entire torrent (therefore not selecting any priorities)
-//                priorities = Priority.array(
-//                    Priority.DEFAULT,
-//                    ti.numFiles()
-//                )
-//                th.prioritize_files2(array2vector(priorities))
-//            }
+        if (th != null && th.is_valid) {
             throw TorrentException("Torrent Exists!!!", TorrentHandle(th))
         }
 

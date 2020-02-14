@@ -36,8 +36,7 @@
         </receiver>
 
         <activity
-            android:name="com.revolgenx.lemillion.activity.MainActivity"
-            android:launchMode="singleTask">
+            android:name="com.revolgenx.lemillion.activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

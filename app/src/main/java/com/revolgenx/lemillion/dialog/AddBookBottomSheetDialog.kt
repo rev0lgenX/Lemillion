@@ -31,6 +31,7 @@ import java.lang.Exception
 import java.net.HttpURLConnection
 import java.util.regex.Pattern
 
+//TODO:rotation problem
 class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
     private val urlKey = "url_key"

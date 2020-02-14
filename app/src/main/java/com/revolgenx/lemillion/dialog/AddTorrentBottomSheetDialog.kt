@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,7 +22,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.adapter.FilesTreeAdapter
-import com.revolgenx.lemillion.core.exception.TorrentLoadException
+import com.revolgenx.lemillion.core.exception.TorrentException
 import com.revolgenx.lemillion.core.preference.storagePath
 import com.revolgenx.lemillion.core.torrent.Torrent
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
@@ -50,7 +49,7 @@ import java.lang.Exception
 import kotlin.coroutines.CoroutineContext
 
 
-//TODO:CHECK STORAGE
+//TODO:rotation problem
 class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, CoroutineScope {
 
     companion object {
@@ -69,7 +68,6 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
     private var path = ""
     private lateinit var adapter: FilesTreeAdapter
     private lateinit var headerLayout: View
-    private val handler = Handler()
     private val engine by inject<TorrentEngine>()
 
 
@@ -108,6 +106,8 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
         super.onActivityCreated(savedInstanceState)
         val uri = arguments?.getParcelable<Uri>(uriKey) ?: return
 
+
+
         addListener()
 
         path = if (savedInstanceState == null) {
@@ -121,11 +121,15 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
                 try {
                     handle =
                         engine.loadTorrent(TorrentInfo(uri.toFile()), File(path), null, null, null)
-                } catch (e: TorrentLoadException) {
-                    context!!.showErrorDialog(e.message ?: "error")
-                    dismiss()
-                    return
-                }catch (e:Exception){
+                } catch (e: TorrentException) {
+                    if (savedInstanceState == null) {
+                        context!!.showErrorDialog(e.message ?: "error")
+                        dismiss()
+                        return
+                    } else {
+                        handle = e.data as? TorrentHandle
+                    }
+                } catch (e: Exception) {
                     context!!.showErrorDialog(e.message ?: "error")
                     dismiss()
                     return
@@ -135,10 +139,14 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
             MAGNET_PREFIX -> {
                 try {
                     handle = engine.fetchMagnet(uri.toString())
-                } catch (e: TorrentLoadException) {
-                    context!!.showErrorDialog(e.message ?: "error")
-                    dismiss()
-                    return
+                } catch (e: TorrentException) {
+                    if (savedInstanceState == null) {
+                        context!!.showErrorDialog(e.message ?: "error")
+                        dismiss()
+                        return
+                    } else {
+                        handle = e.data as? TorrentHandle
+                    }
                 } catch (e: Exception) {
                     context!!.showErrorDialog(e.message ?: "error")
                     dismiss()
@@ -155,10 +163,14 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
                         null,
                         null, null
                     )
-                } catch (e: TorrentLoadException) {
-                    context!!.showErrorDialog(e.message ?: "error")
-                    dismiss()
-                    return
+                } catch (e: TorrentException) {
+                    if (savedInstanceState == null) {
+                        context!!.showErrorDialog(e.message ?: "error")
+                        dismiss()
+                        return
+                    } else {
+                        handle = e.data as? TorrentHandle
+                    }
                 } catch (e: Exception) {
                     context!!.showErrorDialog(e.message ?: "error")
                     dismiss()
@@ -171,7 +183,9 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
             }
         }
 
-        if (handle == null) return
+        if (handle == null) {
+            return
+        }
 
         adapter = FilesTreeAdapter(handle!!) {
             headerLayout.torrentMetaTotalSizeTv.text = it
@@ -183,7 +197,6 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
         val headerRecyclerAdapter = HeaderRecyclerAdapter(adapter)
         headerRecyclerAdapter.setHeaderView(headerLayout)
         treeRecyclerView.adapter = headerRecyclerAdapter
-
 
         updateView()
     }
@@ -351,7 +364,6 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
 
     override fun onDestroy() {
         job.cancel()
-        handler.removeCallbacksAndMessages(null)
         engine.removeListener(this)
         super.onDestroy()
     }

@@ -21,10 +21,5 @@ class TorrentPauseException(msg: String, e: Throwable?) : Exception(msg, e) {
     }
 }
 
-class TorrentLoadException(msg: String, e: Throwable?) : Exception(msg, e){
-//    init {
-//        Timber.e(e, msg)
-//    }
-}
 
 

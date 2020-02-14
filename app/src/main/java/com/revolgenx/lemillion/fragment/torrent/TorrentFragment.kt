@@ -37,6 +37,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
 import kotlin.Comparator
 
 
@@ -54,6 +55,7 @@ class TorrentFragment :
     private val torrentActiveState by inject<TorrentActiveState>()
     private val viewModel by viewModel<TorrentViewModel>()
 
+    //todo: not persisting after minimize on action mode
     private var iconColorInverse = -1
     private var iconColor = -1
 
@@ -121,6 +123,8 @@ class TorrentFragment :
             if (menu is MenuBuilder) {
                 menu.setOptionalIconsVisible(true)
             }
+
+            Timber.d("icon color $iconColor")
 
             menu?.iterator()?.forEach {
                 when (it.itemId) {

@@ -146,10 +146,10 @@ class Book() : Parcelable {
     fun reStart() {
         when (bookProtocol) {
             BookProtocol.HTTP -> {
-                Aria.download(this).load(id).reStart()
+                Aria.download(this).load(id).resume(true)
             }
             BookProtocol.FTP -> {
-                Aria.download(this).loadFtp(id).reStart()
+                Aria.download(this).loadFtp(id).resume(true)
             }
             BookProtocol.UNKNOWN -> {
             }

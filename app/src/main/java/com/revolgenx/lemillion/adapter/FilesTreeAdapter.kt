@@ -10,6 +10,7 @@ import com.revolgenx.lemillion.adapter.meta.TorrentFile
 import com.revolgenx.lemillion.adapter.meta.TorrentFolder
 import com.revolgenx.lemillion.adapter.meta.TorrentName
 import com.revolgenx.lemillion.core.util.formatSize
+import com.revolgenx.lemillion.view.string
 import kotlinx.android.synthetic.main.file_holder_adapter_layout.view.*
 import kotlinx.android.synthetic.main.folder_holder_adapter_layout.view.*
 import org.libtorrent4j.Priority
@@ -75,6 +76,8 @@ class FilesTreeAdapter(
                     torrentFileNameTv.text = item.name
                     torrentFileCheck.setOnCheckedChangeListener(null)
                     torrentFileCheck.isChecked = item.priority != Priority.IGNORE
+                    torrentFilePercentTv.text = context.string(R.string.percent_s)
+                        .format(item.receivedBytes * 100f / item.size)
 //                    torrentFilePercentTv.text =
 //                        if (item.file!!.length > 0) {
 //                            (item.file!!.bytesCompleted * 100f / item.file!!.length)).toString()+"%"
@@ -115,11 +118,13 @@ class FilesTreeAdapter(
                 val f = TorrentFile(handle, 0)
                 val n = TreeListView.TreeNode(root, f)
                 f.node = n
+                f.receivedBytes = receivedBytes[0]
                 root.nodes.add(n)
             } else {
                 for (i in 0 until count) {
                     val f = TorrentFile(handle, i)
                     val file = File(f.path)
+                    f.receivedBytes = receivedBytes[i]
                     val parent = file.parent
 
                     if (parent != null) {

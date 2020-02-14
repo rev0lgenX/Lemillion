@@ -40,6 +40,7 @@ import com.revolgenx.lemillion.core.sorting.book.BookSorting
 import com.revolgenx.lemillion.core.sorting.book.BookSortingComparator
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSorting
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSortingComparator
+import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.dialog.*
 import com.revolgenx.lemillion.event.OnBackPressed
@@ -54,6 +55,7 @@ import com.revolgenx.lemillion.view.makeToast
 import kotlinx.android.synthetic.main.activity_main.*
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity() {
 
@@ -68,6 +70,7 @@ class MainActivity : AppCompatActivity() {
     private val uriKey = "uri_key"
     private var query = ""
     private var uri: Uri? = null
+    private val engine by inject<TorrentEngine>()
 
     private val pageChangeListener = object : ViewPager.OnPageChangeListener {
         override fun onPageScrollStateChanged(state: Int) {
@@ -132,7 +135,6 @@ class MainActivity : AppCompatActivity() {
             uri = intent.getParcelableExtra("uri")
         }
 
-
         //TODO:SEARCH
         savedInstanceState?.let {
             it.getString(queryKey)?.let {
@@ -142,8 +144,8 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            uri = it.getParcelable(uriKey)
-            initDecode()
+//            uri = it.getParcelable(uriKey)
+//            initDecode()
         }
 
     }
@@ -180,8 +182,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        intent?.removeExtra("uri")
-        this.uri = null
+        intent.replaceExtras(Bundle())
+        intent.removeExtra("uri")
+        intent.action = ""
+        intent.data = null
+        intent.flags = 0
     }
 
 
