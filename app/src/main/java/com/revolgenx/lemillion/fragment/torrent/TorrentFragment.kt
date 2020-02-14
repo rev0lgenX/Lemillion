@@ -25,7 +25,10 @@ import com.revolgenx.lemillion.core.exception.TorrentResumeException
 import com.revolgenx.lemillion.core.sorting.torrent.TorrentSortingComparator
 import com.revolgenx.lemillion.core.torrent.*
 import com.revolgenx.lemillion.core.util.*
+import com.revolgenx.lemillion.view.color
 import com.revolgenx.lemillion.event.*
+import com.revolgenx.lemillion.view.showProgress
+import com.revolgenx.lemillion.view.makeToast
 import com.revolgenx.lemillion.fragment.BaseRecyclerFragment
 import com.revolgenx.lemillion.viewmodel.TorrentViewModel
 import kotlinx.android.synthetic.main.base_recycler_view_layout.*

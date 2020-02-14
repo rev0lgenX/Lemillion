@@ -28,6 +28,8 @@ import com.revolgenx.lemillion.core.preference.storagePath
 import com.revolgenx.lemillion.core.torrent.Torrent
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.util.*
+import com.revolgenx.lemillion.view.showProgress
+import com.revolgenx.lemillion.view.makeToast
 import com.revolgenx.lemillion.event.TorrentAddedEvent
 import com.revolgenx.lemillion.event.TorrentAddedEventTypes
 import kotlinx.android.synthetic.main.add_torrent_bottom_sheet_layout.*
@@ -70,9 +72,6 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
     private val handler = Handler()
     private val engine by inject<TorrentEngine>()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -313,15 +312,11 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
             headerLayout.torrentMetaTotalSizeTv.text =
                 handle!!.torrentFile().totalSize().formatSize()
 
-            /*      headerLayout.torrentMetaTotalSizeTv.text =
-                Libtorrent.torrentPendingBytesLength(handle).formatSize()
-*/
             headerLayout.emptyTv.visibility = View.GONE
             downloadMetadataTv.visibility = View.GONE
             torrentPiecesTv.description =
                 handle!!.torrentFile().numPieces().toString() + "/" + handle!!.torrentFile().pieceLength().toLong().formatSize()
 
-//            piecesView.drawPieces(handle)
             torrentSizeTv.description = handle!!.torrentFile().totalSize().formatSize()
         } else {
             downloadMetadataTv.visibility = View.VISIBLE

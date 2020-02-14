@@ -8,8 +8,8 @@ import androidx.core.os.bundleOf
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.core.book.Book
+import com.revolgenx.lemillion.core.util.copyToClipBoard
 import com.revolgenx.lemillion.core.util.formatSize
-import com.revolgenx.lemillion.view.copyToClipBoard
 import kotlinx.android.synthetic.main.book_meta_bottom_sheet_dialog_layout.*
 //TODO://EDIT NAME AND PATH
 class BookMetaBottomSheetDialog : BottomSheetDialogFragment() {
@@ -48,11 +48,6 @@ class BookMetaBottomSheetDialog : BottomSheetDialogFragment() {
             context!!.copyToClipBoard(bookUrlTv.description)
         }
 
-    }
-
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
 }

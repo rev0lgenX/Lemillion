@@ -10,9 +10,11 @@ import com.arialyy.aria.core.inf.IEntity
 import com.arialyy.aria.core.task.DownloadTask
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.core.db.book.BookEntity
+import com.revolgenx.lemillion.core.util.getFree
 import com.revolgenx.lemillion.core.util.postEvent
 import com.revolgenx.lemillion.event.BookEvent
 import com.revolgenx.lemillion.event.BookEventType
+import java.io.File
 import java.lang.Exception
 
 
@@ -90,7 +92,6 @@ class Book() : Parcelable {
         IEntity.STATE_PRE -> {
             context.getString(R.string.connecting)
         }
-
         IEntity.STATE_POST_PRE -> {
             context.getString(R.string.connecting)
         }
@@ -106,8 +107,7 @@ class Book() : Parcelable {
         }
 
     fun resume() {
-
-        if(!checkValidity()) return
+        if (!checkValidity()) return
 
         hasError = false
         errorMsg = ""
@@ -129,7 +129,7 @@ class Book() : Parcelable {
     }
 
     fun stop() {
-        if(!checkValidity()) return
+        if (!checkValidity()) return
 
         when (bookProtocol) {
             BookProtocol.HTTP -> {
@@ -146,10 +146,10 @@ class Book() : Parcelable {
     fun reStart() {
         when (bookProtocol) {
             BookProtocol.HTTP -> {
-                Aria.download(this).load(id).resume(true)
+                Aria.download(this).load(id).reStart()
             }
             BookProtocol.FTP -> {
-                Aria.download(this).loadFtp(id).resume(true)
+                Aria.download(this).loadFtp(id).reStart()
             }
             BookProtocol.UNKNOWN -> {
             }
@@ -246,14 +246,18 @@ class Book() : Parcelable {
     @Download.onTaskFail
     fun taskFail(task: DownloadTask?, e: Exception?) {
         if (!checkTaskValidity(task)) return
-        postEvent(BookEvent(listOf(this), BookEventType.BOOK_FAILED))
 
         hasError = true
         if (e != null) {
-            errorMsg = e.message ?: "Error"
+            errorMsg = e.message ?: ""
         }
+
+        postEvent(BookEvent(listOf(this), BookEventType.BOOK_FAILED))
         update(task)
     }
+
+
+    fun isLowSpace() = entity!!.fileSize >= getFree(File(entity!!.filePath))
 
 
     @Download.onTaskComplete

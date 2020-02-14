@@ -16,7 +16,6 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import com.revolgenx.lemillion.R
-import com.revolgenx.lemillion.core.util.dip
 
 typealias ImageCallback = (() -> Unit)?
 
@@ -44,13 +43,11 @@ class TitleTextView(context: Context, attributeSet: AttributeSet?, defStyle: Int
                 .apply {
                     titleName = getString(R.styleable.TitleTextView_titleName) ?: ""
                     showDrawable = getBoolean(R.styleable.TitleTextView_showDrawable, false)
-//                    if (showDrawable)
                     imageResource =
                         getResourceId(R.styleable.TitleTextView_descriptionDrawable, 0)
                 }
         }
 
-//        if (showDrawable)
         AppCompatImageView(context).let { iv ->
             iv.id = R.id.descriptionImageView
             iv.layoutParams =

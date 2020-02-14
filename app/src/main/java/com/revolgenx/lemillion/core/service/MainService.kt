@@ -1,9 +1,13 @@
 package com.revolgenx.lemillion.core.service
 
 import android.app.*
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkRequest
 import android.os.Binder
 import android.os.Build
 import android.os.Handler
@@ -20,6 +24,8 @@ import com.revolgenx.lemillion.core.torrent.Torrent
 import com.revolgenx.lemillion.core.torrent.TorrentActiveState
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.util.*
+import com.revolgenx.lemillion.view.color
+import com.revolgenx.lemillion.view.string
 import com.revolgenx.lemillion.event.*
 import kotlinx.coroutines.*
 import org.greenrobot.eventbus.Subscribe
@@ -38,7 +44,7 @@ class MainService : Service() {
     private val channelName = "lemillion_channel_1"
     private val channelName1 = "lemillion_channel_2"
     private var foregroundNotification: NotificationCompat.Builder? = null
-    private var startupPendingIntent:PendingIntent? = null
+    private var startupPendingIntent: PendingIntent? = null
     private val handler = Handler()
 
 
@@ -49,7 +55,6 @@ class MainService : Service() {
     private val bookRepository by inject<BookRepository>()
 
     private val torrentActiveState by inject<TorrentActiveState>()
-
 
     //for any error
     private val runnable = object : Runnable {
@@ -69,6 +74,11 @@ class MainService : Service() {
         }
     }
 
+    private val wifiReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+    }
 
     inner class LocalBinder : Binder() {
         val service: MainService
@@ -88,8 +98,24 @@ class MainService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Timber.d("onstartcommand")
         registerClass(this)
+        registerNetwork()
         makeForegroundNotify()
         return START_NOT_STICKY
+    }
+
+    private fun registerNetwork() {
+        if (applicationContext == null) return
+        val connectivityManager =
+            applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                ?: return
+
+        connectivityManager.registerNetworkCallback(NetworkRequest.Builder().build(),object :ConnectivityManager.NetworkCallback(){
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                stopService()
+            }
+        })
+
     }
 
 
@@ -395,7 +421,13 @@ class MainService : Service() {
         if (list is List<*>) {
             list.forEach { obj ->
                 builder.setContentTitle(if (obj is Torrent) obj.name else (obj as Book).name)
-                builder.setContentText(if (obj is Torrent) obj.errorMsg else (obj as Book).errorMsg)
+                builder.setContentText(if (obj is Torrent) obj.errorMsg else (obj as Book).let {
+                    if (it.isLowSpace()) {
+                        getString(R.string.low_space)
+                    } else {
+                        it.errorMsg.ifEmpty { getString(R.string.error) }
+                    }
+                })
                 notifyManager!!.notify(
                     if (obj is Torrent) obj.hashCode() else (obj as Book).id.hashCode(),
                     builder.build()

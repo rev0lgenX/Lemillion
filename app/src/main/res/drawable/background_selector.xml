@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/selectedBackgroundColor" android:state_selected="true" android:state_pressed="true"/>
-    <item android:drawable="@color/colorPrimary" android:state_selected="false" android:state_pressed="false"/>
-</selector>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+        android:color="@color/selectedBackgroundColor">
+    <item>
+        <selector>
+            <item android:state_selected="true">
+                <color android:color="@color/selectedBackgroundColor" />
+            </item>
+            <item android:state_selected="false">
+                <color android:color="@color/colorPrimary" />
+            </item>
+        </selector>
+    </item>
+
+</ripple>

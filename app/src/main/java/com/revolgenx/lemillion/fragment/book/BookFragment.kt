@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.checkbox.checkBoxPrompt
-import com.arialyy.aria.core.Aria
 import com.arialyy.aria.core.inf.IEntity
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.activity.MainActivity
@@ -23,6 +22,8 @@ import com.revolgenx.lemillion.core.book.Book
 import com.revolgenx.lemillion.core.book.BookProgressListener
 import com.revolgenx.lemillion.core.sorting.book.BookSortingComparator
 import com.revolgenx.lemillion.core.util.*
+import com.revolgenx.lemillion.view.color
+import com.revolgenx.lemillion.view.makeToast
 import com.revolgenx.lemillion.dialog.BookMetaBottomSheetDialog
 import com.revolgenx.lemillion.event.BookEvent
 import com.revolgenx.lemillion.event.BookEventType

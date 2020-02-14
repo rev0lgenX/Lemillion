@@ -1,21 +1,20 @@
 package com.revolgenx.lemillion.core.util
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
-import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.github.razir.progressbutton.hideProgress
-import com.github.razir.progressbutton.showProgress
 import com.revolgenx.lemillion.R
+import com.revolgenx.lemillion.view.makeToast
+import com.revolgenx.lemillion.view.string
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.greenrobot.eventbus.EventBus
+
 
 
 val MAGNET_PREFIX = "magnet"
@@ -45,42 +44,6 @@ fun <T> postStickyEvent(cls: T) {
     EventBus.getDefault().postSticky(cls)
 }
 
-
-fun Context.makeToast(msg: String? = null, @StringRes resId: Int? = null) {
-    Toast.makeText(this, msg ?: getString(resId!!), Toast.LENGTH_SHORT).show()
-}
-
-fun Fragment.makeToast(msg: String? = null, resId: Int? = null) {
-    context!!.makeToast(msg, resId)
-}
-
-
-fun TextView.showProgress(@StringRes resId: Int = 0, b: Boolean = false, progColor: Int? = null) {
-    if (b) {
-        this.showProgress {
-            buttonTextRes = resId
-            progressRadiusRes = R.dimen.progress_radius_dimen
-            progressStrokeRes = R.dimen.progress_stroke_dimen
-            progressColor = progColor ?: ContextCompat.getColor(context, R.color.colorAccent)
-        }
-    } else {
-        this.hideProgress(resId)
-    }
-}
-
-
-fun makeTextView(context: Context) = TextView(context).apply {
-    layoutParams = ViewGroup.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.WRAP_CONTENT
-    )
-}
-
-fun TextView.setNAText(txt: String) {
-    text = if (txt.isEmpty()) "n/a"
-    else txt
-}
-
 fun Long.formatRemainingTime(): String {
     var n = this
     val day = n / (24 * 3600)
@@ -98,19 +61,20 @@ fun Long.formatRemainingTime(): String {
 
 fun Float.formatProgress() = String.format("%.1f%%", this)
 
-fun Context.color(@ColorRes id: Int) = ContextCompat.getColor(this, id)
-fun Context.string(@StringRes id: Int) = getString(id)
-
 suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineScope {
     map { async { f(it) } }.awaitAll()
 }
 
 
-inline fun Context.dip(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-inline fun Context.dp(value: Int): Float = (value * resources.displayMetrics.density)
+fun Context.copyToClipBoard(str: String) {
+    val clipboard: ClipboardManager =
+        ContextCompat.getSystemService<ClipboardManager>(this, ClipboardManager::class.java)!!
+    val clip = ClipData.newPlainText(string(R.string.app_name), str)
+    clipboard.setPrimaryClip(clip)
+    makeToast("Text Copied.")
+}
 
-inline fun View.dip(value: Int) = context.dip(value)
-inline fun View.dp(value: Int) = context.dp(value)
+
 
 
 

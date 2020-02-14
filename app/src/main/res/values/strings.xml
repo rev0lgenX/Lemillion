@@ -57,7 +57,7 @@
     <string name="download">Download</string>
     <string name="rename_file">Rename file</string>
     <string name="change_path">Change Path</string>
-    <string name="delet_task">Delete task</string>
+    <string name="delete_task">Delete task</string>
     <string name="task_exists">Task exists</string>
     <string name="file_exists">File exists</string>
     <string name="task_exists_please_change_the_file_name_or_path_and_continue">task exists please change the file name or path and continue</string>
@@ -98,8 +98,11 @@
     <string name="unknown_scheme">Unknown Scheme</string>
     <string name="restart">Restart</string>
     <string name="unsupported_format">Unsupported format</string>
+    <string name="size_free">Size: Free %s</string>
 
     <string name="service_title_format">Torrent %d | File %d</string>
+    <string name="free">Free</string>
+    <string name="low_space">Low space</string>
 
 
     <string-array name="sort_array">

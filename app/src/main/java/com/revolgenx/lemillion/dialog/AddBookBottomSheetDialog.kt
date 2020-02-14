@@ -1,6 +1,5 @@
 package com.revolgenx.lemillion.dialog
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -21,6 +20,9 @@ import com.revolgenx.lemillion.core.book.Book
 import com.revolgenx.lemillion.core.book.BookProtocol
 import com.revolgenx.lemillion.core.preference.storagePath
 import com.revolgenx.lemillion.core.util.*
+import com.revolgenx.lemillion.view.string
+import com.revolgenx.lemillion.view.makeToast
+import com.revolgenx.lemillion.view.showProgress
 import com.revolgenx.lemillion.event.BookAddedEvent
 import kotlinx.android.synthetic.main.add_book_bottom_sheet_dialog_layout.*
 import timber.log.Timber
@@ -36,12 +38,13 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
     private val nameKey = "name_key"
     private val taskKey = "task_key"
     private val failedCauseKey = "failed_cause_key"
-    private var taskId = -1L
 
+    private var taskId = -1L
 
     private var url: String = ""
     private var path: String = ""
     private var name: String = ""
+    private var size: Long = 0L
     private val fullPath: String
         get() = "$path/$name"
     private var failCause = TaskFailedCause.NONE
@@ -101,9 +104,13 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
     }
 
     private fun updateView() {
+        if (context == null) return
         bookNameTv.description = name
         bookPathTv.description = path
         bookUrlTv.description = url
+        bookFileSizeTv.titleTextView().text =
+            context!!.string(R.string.size_free).format(getFree(File(path)).formatSize())
+        bookFileSizeTv.description = size.formatSize()
 
         when (failCause) {
             TaskFailedCause.NONE -> {
@@ -128,9 +135,10 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
                 errorTextView.text = getString(R.string.http_not_found)
                 showDrawables(false)
             }
-
             TaskFailedCause.LOW_SPACE -> {
-
+                errorTextView.visibility = View.VISIBLE
+                errorTextView.text = getString(R.string.low_space)
+                showDrawables(true)
             }
             TaskFailedCause.SAME_URL -> {
                 errorTextView.visibility = View.VISIBLE
@@ -210,6 +218,12 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
             when (failCause) {
                 TaskFailedCause.NONE -> {
+                    if ((size >= getFree(File(path)))) {
+                        failCause = TaskFailedCause.LOW_SPACE
+                        updateView()
+                        return@setOnClickListener
+                    }
+
                     val protocol = when {
                         url.startsWith(HTTP_PREFIX) || url.startsWith(HTTPS_PREFIX) -> BookProtocol.HTTP
                         url.startsWith(FTP_PREFIX) -> BookProtocol.FTP
@@ -218,6 +232,7 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
                             return@setOnClickListener
                         }
                     }
+
                     postEvent(BookAddedEvent(Book().also { book ->
                         book.id = Aria.download(this).load(url).setFilePath(fullPath).create()
                         book.bookProtocol = protocol
@@ -260,13 +275,6 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
             return true
         }
 
-        if (File(newPath).exists()) {
-            makeToast(resId = R.string.file_exists)
-            failCause = TaskFailedCause.FILE_EXIST
-            showStatusProgress(R.string.failed)
-            return true
-        }
-
         if (Aria.download(this).taskExists(url)) {
             makeToast(resId = R.string.file_exists)
             failCause = TaskFailedCause.SAME_URL
@@ -279,17 +287,38 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
         return false
     }
 
-    @Download.onTaskRunning
-    fun onTaskRunning(task: DownloadTask) {
-        taskId = -1
-        showStatusProgress(visibility = false)
-        failCause = TaskFailedCause.NONE
-        name =
-            task.downloadEntity.serverFileName ?: name
+    private fun checkFileExists(newPath: String): Boolean {
+        if (File(newPath).exists()) {
+            makeToast(resId = R.string.file_exists)
+            failCause = TaskFailedCause.FILE_EXIST
+            showStatusProgress(R.string.failed)
+            return true
+        }
+        return false
+    }
 
-        Aria.download(this).load(task.entity.id).stop()
-        Aria.download(this).load(task.entity.id).cancel(true)
-        updateView()
+    @Download.onTaskRunning
+    fun onTaskRunning(task: DownloadTask?) {
+        if (task != null) {
+            taskId = -1
+            showStatusProgress(visibility = false)
+            failCause = TaskFailedCause.NONE
+            name = task.downloadEntity.serverFileName ?: name
+            size = task.fileSize
+
+            if ((task.fileSize >= getFree(File(path)))) {
+                failCause = TaskFailedCause.LOW_SPACE
+            }
+            checkFileExists(fullPath)
+            Aria.download(this).load(task.entity.id).stop()
+            Aria.download(this).load(task.entity.id).cancel(true)
+            updateView()
+        } else {
+            taskId = -1
+            showStatusProgress(visibility = false)
+            failCause = TaskFailedCause.UNKNOWN
+            updateView()
+        }
     }
 
     @Download.onTaskFail

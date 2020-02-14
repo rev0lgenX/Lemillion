@@ -9,8 +9,11 @@ import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.core.torrent.TorrentProgressListener
 import com.revolgenx.lemillion.core.torrent.TorrentState
 import com.revolgenx.lemillion.core.util.*
+import com.revolgenx.lemillion.view.string
+import com.revolgenx.lemillion.view.setNAText
 import kotlinx.android.synthetic.main.torrent_meta_fragment.*
 import kotlinx.android.synthetic.main.torrent_meta_fragment.torrentPiecesTv
+import java.io.File
 import java.util.*
 
 class TorrentMetaFragment : TorrentBaseMetaFragment(), TorrentProgressListener {
@@ -22,7 +25,6 @@ class TorrentMetaFragment : TorrentBaseMetaFragment(), TorrentProgressListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         return inflater.inflate(R.layout.torrent_meta_fragment, container, false)
     }
 
@@ -41,6 +43,7 @@ class TorrentMetaFragment : TorrentBaseMetaFragment(), TorrentProgressListener {
 
     private fun updateView() {
         if (!checkValidity()) return
+        if (context == null) return
 
         val handle = torrent.handle
         val status = torrent.torrentStatus()
@@ -60,6 +63,7 @@ class TorrentMetaFragment : TorrentBaseMetaFragment(), TorrentProgressListener {
             } else ""
         )
 
+        torrentFileSizeTv.titleTextView().text = context!!.string(R.string.size_free).format(getFree(File(torrent.path)).formatSize())
         torrentFileSizeTv.description = torrent.totalSize.formatSize()
         torrentSeedersLeechersTv.description =
             "${torrent.connectedSeeders()} (${torrent.totalSeeders()}) / ${torrent.connectedLeechers()} (${torrent.totalLeechers()})"

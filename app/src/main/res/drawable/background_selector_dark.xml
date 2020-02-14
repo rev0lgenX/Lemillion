@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/selectedBackgroundColorInverse" android:state_selected="true" android:state_pressed="true"/>
-    <item android:drawable="@color/backgroundDark" android:state_selected="false" android:state_pressed="false"/>
-</selector>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+        android:color="@color/colorPrimaryInverse">
+    <item>
+        <selector>
+            <item android:state_selected="true">
+                <color android:color="@color/colorPrimaryInverse" />
+            </item>
+            <item android:state_selected="false">
+                <color android:color="@color/backgroundDark" />
+            </item>
+        </selector>
+    </item>
+
+</ripple>

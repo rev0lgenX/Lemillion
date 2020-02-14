@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.os.Environment.DIRECTORY_DOWNLOADS
-import org.apache.commons.io.FileUtils
+import android.os.StatFs
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.*
@@ -58,7 +58,7 @@ private fun getTempDir(context: Context): File? {
 }
 
 @Throws(FileNotFoundException::class)
-fun uriContentToByteArray(context: Context, uri: Uri):ByteArray?{
+fun uriContentToByteArray(context: Context, uri: Uri): ByteArray? {
     return context.contentResolver.openInputStream(uri)?.let {
         val bytes = it.readBytes()
         it.close()
@@ -66,7 +66,12 @@ fun uriContentToByteArray(context: Context, uri: Uri):ByteArray?{
     }
 }
 
-@Throws(Exception::class)
-fun copyContentURIToFile(context: Context, uri: Uri, file: File) {
-    FileUtils.copyInputStreamToFile(context.contentResolver.openInputStream(uri), file)
+fun getFree(file: File?): Long {
+    var f = file
+    while (!f!!.exists()) {
+        f = f.parentFile
+        if (f == null) return 0
+    }
+    val fsi = StatFs(f.path)
+    return fsi.blockSizeLong * fsi.availableBlocksLong
 }

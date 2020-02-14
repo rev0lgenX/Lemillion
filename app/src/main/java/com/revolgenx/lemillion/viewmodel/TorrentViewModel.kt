@@ -19,6 +19,7 @@ import com.revolgenx.lemillion.core.torrent.TorrentActiveState
 import com.revolgenx.lemillion.core.torrent.TorrentEngine
 import com.revolgenx.lemillion.core.util.*
 import com.revolgenx.lemillion.event.*
+import com.revolgenx.lemillion.view.makeToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.Subscribe

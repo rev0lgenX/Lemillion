@@ -34,7 +34,7 @@
         android:drawablePadding="10dp"
         android:fontFamily="@font/open_sans_regular"
         android:text="@string/task_exists_please_change_the_file_name_or_path_and_continue"
-        android:textColor="?android:textColorPrimary"
+        android:textColor="@color/textColorPrimary"
         app:drawableLeftCompat="@drawable/ic_info"
         app:drawableTint="@color/red"
         android:background="@color/gray"
@@ -63,7 +63,7 @@
                 android:layout_marginTop="10dp"
                 app:descriptionDrawable="@drawable/ic_edit"
                 app:showDrawable="false"
-                app:titleName="Name" />
+                app:titleName="@string/name" />
 
             <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/bookPathTv"
@@ -72,7 +72,7 @@
                 android:layout_marginTop="10dp"
                 app:descriptionDrawable="@drawable/ic_folder"
                 app:showDrawable="false"
-                app:titleName="Name" />
+                app:titleName="@string/path" />
 
             <com.revolgenx.lemillion.view.TitleTextView
                 android:id="@+id/bookUrlTv"
@@ -81,7 +81,14 @@
                 android:layout_marginTop="10dp"
                 app:descriptionDrawable="@drawable/ic_edit"
                 app:showDrawable="true"
-                app:titleName="Name" />
+                app:titleName="@string/url" />
+
+            <com.revolgenx.lemillion.view.TitleTextView
+                android:id="@+id/bookFileSizeTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:titleName="@string/size" />
 
         </LinearLayout>
 
