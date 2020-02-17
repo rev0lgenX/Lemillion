@@ -158,7 +158,7 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.progressText.visibility = View.GONE
+        progressText.visibility = View.GONE
         adapter = BookRecyclerAdapter()
     }
 
