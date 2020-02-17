@@ -208,6 +208,7 @@ class TorrentMetaActivity : AppCompatActivity() {
                 )
             }
         }
+
         dialog.show {
             cancelOnTouchOutside(false)
             positiveButton {
