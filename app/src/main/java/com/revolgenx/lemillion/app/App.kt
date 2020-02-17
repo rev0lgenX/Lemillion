@@ -46,7 +46,6 @@ class App : MultiDexApplication() {
         }
 
         MobileAds.initialize(this)
-
     }
 
 }
