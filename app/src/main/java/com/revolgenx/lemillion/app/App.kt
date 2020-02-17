@@ -31,7 +31,8 @@ class App : MultiDexApplication() {
 
         if (BuildConfig.DEBUG) {
             Timber.plant(LemillionTree(), Timber.DebugTree())
-//            FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled()
+        } else {
+            FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
         }
 
 
