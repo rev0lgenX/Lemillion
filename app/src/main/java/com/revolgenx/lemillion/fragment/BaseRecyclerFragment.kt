@@ -39,7 +39,6 @@ abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Bas
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         adView = AdView(context)
         adView.adSize = AdSize.BANNER
 
@@ -65,7 +64,6 @@ abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Bas
         val a = TypedValue()
         context!!.theme.resolveAttribute(android.R.attr.textColorPrimary, a, true)
         @ColorInt val textColor = a.data
-
         progressText.setTextColor(textColor)
 
         mBaseRecyclerView = RecyclerView(context!!).also {
