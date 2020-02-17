@@ -3,6 +3,7 @@ package com.revolgenx.lemillion.app
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import com.arialyy.aria.core.Aria
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.revolgenx.lemillion.BuildConfig
 import com.revolgenx.lemillion.core.coreModules
@@ -43,6 +44,8 @@ class App : MultiDexApplication() {
                 )
             )
         }
+
+        MobileAds.initialize(this)
 
     }
 

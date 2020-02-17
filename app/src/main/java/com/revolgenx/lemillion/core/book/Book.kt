@@ -107,13 +107,7 @@ class Book() : Parcelable {
         }
 
     fun resume() {
-<<<<<<< HEAD
         if (!checkValidity()) return
-=======
-
-        if(!checkValidity()) return
->>>>>>> fix torrent engine stop when downloading files completes
-
         hasError = false
         errorMsg = ""
         if (state == IEntity.STATE_FAIL) {
@@ -134,11 +128,8 @@ class Book() : Parcelable {
     }
 
     fun stop() {
-<<<<<<< HEAD
+
         if (!checkValidity()) return
-=======
-        if(!checkValidity()) return
->>>>>>> fix torrent engine stop when downloading files completes
 
         when (bookProtocol) {
             BookProtocol.HTTP -> {

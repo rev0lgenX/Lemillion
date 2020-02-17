@@ -25,5 +25,4 @@
     <item name="fileId" type="id"/>
     <item name="magnetId" type="id"/>
     <item name="linkId" type="id"/>
-
 </resources>
