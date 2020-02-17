@@ -111,6 +111,10 @@
     <string name="add_trackers">Add trackers</string>
     <string name="add_space_between_trackers">Add space between trackers</string>
     <string name="speed_limit_size_format">Speed limit (KB)</string>
+    <string name="download_speed_kb">Download speed (Kb)</string>
+    <string name="upload_speed_kb">Upload speed (Kb)</string>
+    <string name="invalid_number_format">Invalid number format</string>
+    <string name="torrent_name">Torrent name</string>
 
 
     <string-array name="sort_array">

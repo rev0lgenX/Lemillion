@@ -2,13 +2,12 @@ package com.revolgenx.lemillion.dialog
 
 import android.content.ClipboardManager
 import android.content.Context
+import android.text.InputType
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatDrawableManager
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.DrawableCompat
-import androidx.fragment.app.Fragment
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.WhichButton
@@ -27,10 +26,14 @@ import com.obsez.android.lib.filechooser.ChooserDialog
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.activity.MainActivity
 import com.revolgenx.lemillion.core.preference.*
+import com.revolgenx.lemillion.core.util.formatSize
+import com.revolgenx.lemillion.view.makeToast
 import com.revolgenx.lemillion.view.string
 import kotlinx.android.synthetic.main.input_layout.*
 import kotlinx.android.synthetic.main.input_layout.view.*
 import kotlinx.android.synthetic.main.setting_layout.*
+import timber.log.Timber
+import java.lang.NumberFormatException
 
 
 fun Context.showErrorDialog(error: String) {
@@ -44,8 +47,8 @@ fun Context.showErrorDialog(error: String) {
 
 fun MainActivity.makeSettingDialog() {
     MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
-        val view = customView(R.layout.setting_layout, scrollable = true)
-        view.apply {
+        val customview = customView(R.layout.setting_layout, scrollable = true)
+        customview.apply {
             darkThemeSwitch.isChecked = getThemePref(context) == 1
             darkThemeSwitch.setOnCheckedChangeListener { _, isChecked ->
                 setThemePref(if (isChecked) 1 else 0, context)
@@ -80,6 +83,73 @@ fun MainActivity.makeSettingDialog() {
                     .enableOptions(true)
                     .build()
                     .show()
+            }
+
+            torrentDownloadSpeed.description = torrentPreferenceModel.downloadRateLimit.formatSize()
+            Timber.d("${torrentPreferenceModel.downloadRateLimit}")
+            torrentDownloadSpeed.setOnClickListener {
+                MaterialDialog(context).show {
+                    this.title(R.string.speed_limit)
+                    input(
+                        prefill = (torrentPreferenceModel.downloadRateLimit / 1024).toString(),
+                        inputType = InputType.TYPE_CLASS_NUMBER
+                    ) { _, charSequence ->
+                        try {
+                            val rate = charSequence.toString().toInt()
+                            torrentPreferenceModel.downloadRateLimit = rate
+                            Timber.d("${torrentPreferenceModel.downloadRateLimit}")
+                            torrentEngine.setMaxDownloadSpeed()
+                            customview.torrentDownloadSpeed.description = (rate * 1024).formatSize()
+                        } catch (e: NumberFormatException) {
+                            makeToast(resId = R.string.invalid_number_format)
+                        }
+                    }
+                    negativeButton()
+                }
+            }
+
+            torrentUploadSpeed.description = torrentPreferenceModel.uploadRateLimit.formatSize()
+            torrentUploadSpeed.setOnClickListener {
+                MaterialDialog(context).show {
+                    this.title(R.string.speed_limit)
+                    input(
+                        prefill = (torrentPreferenceModel.uploadRateLimit / 1024).toString(),
+                        inputType = InputType.TYPE_CLASS_NUMBER
+                    ) { _, charSequence ->
+                        try {
+                            val rate = charSequence.toString().toInt()
+                            torrentPreferenceModel.uploadRateLimit = rate
+                            torrentEngine.setMaxUploadSpeed()
+                            customview.torrentUploadSpeed.description = (rate * 1024).formatSize()
+                        } catch (e: NumberFormatException) {
+                            makeToast(resId = R.string.invalid_number_format)
+                        }
+                    }
+                    negativeButton()
+                }
+            }
+
+
+            fileDownloadSpeed.description =
+                (bookPreferenceModel.downloadRateLimit * 1024).formatSize()
+            fileDownloadSpeed.setOnClickListener {
+                MaterialDialog(context).show {
+                    this.title(R.string.speed_limit)
+                    input(
+                        prefill = bookPreferenceModel.downloadRateLimit.toString(),
+                        inputType = InputType.TYPE_CLASS_NUMBER
+                    ) { _, charSequence ->
+                        try {
+                            val rate = charSequence.toString().toInt()
+
+                            bookPreferenceModel.downloadRateLimit = rate
+                            customview.fileDownloadSpeed.description = (rate * 1024).formatSize()
+                        } catch (e: NumberFormatException) {
+                            makeToast(resId = R.string.invalid_number_format)
+                        }
+                    }
+                    negativeButton()
+                }
             }
 
 

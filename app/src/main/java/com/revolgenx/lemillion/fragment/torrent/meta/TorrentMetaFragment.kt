@@ -5,10 +5,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.input.input
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.core.torrent.TorrentProgressListener
 import com.revolgenx.lemillion.core.torrent.TorrentState
 import com.revolgenx.lemillion.core.util.*
+import com.revolgenx.lemillion.view.makeToast
 import com.revolgenx.lemillion.view.string
 import com.revolgenx.lemillion.view.setNAText
 import kotlinx.android.synthetic.main.torrent_meta_fragment.*
@@ -34,7 +37,31 @@ class TorrentMetaFragment : TorrentBaseMetaFragment(), TorrentProgressListener {
         if (!checkValidity()) return
 
         torrent.addListener(this)
+        addListener()
         updateView()
+    }
+
+    fun addListener() {
+        torrentNameTv.setDrawableClickListener {
+            MaterialDialog(this.context!!).show {
+                title(R.string.torrent_name)
+                input(prefill = this@TorrentMetaFragment.torrentNameTv.description) { _, charSequence ->
+                    val newPath = torrent.path + "$charSequence"
+                    if (File(newPath).exists()) {
+                        makeToast(string(R.string.file_exists))
+                        return@input
+                    }
+                    if (torrent.checkValidity())
+                        torrent.handle!!.torrentFile().files().name(charSequence.toString())
+                }
+
+                negativeButton()
+            }
+        }
+
+        torrentHashTv.setDrawableClickListener {
+            context!!.copyToClipBoard(torrentHashTv.description)
+        }
     }
 
     override fun invoke() {
@@ -63,7 +90,8 @@ class TorrentMetaFragment : TorrentBaseMetaFragment(), TorrentProgressListener {
             } else ""
         )
 
-        torrentFileSizeTv.titleTextView().text = context!!.string(R.string.size_free).format(getFree(File(torrent.path)).formatSize())
+        torrentFileSizeTv.titleTextView().text =
+            context!!.string(R.string.size_free).format(getFree(File(torrent.path)).formatSize())
         torrentFileSizeTv.description = torrent.totalSize.formatSize()
         torrentSeedersLeechersTv.description =
             "${torrent.connectedSeeders()} (${torrent.totalSeeders()}) / ${torrent.connectedLeechers()} (${torrent.totalLeechers()})"

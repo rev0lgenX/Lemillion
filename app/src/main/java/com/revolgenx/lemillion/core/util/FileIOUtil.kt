@@ -26,6 +26,20 @@ fun getDefualtStoragePath(): String {
         if (dir.mkdirs()) path else ""
 }
 
+fun Int.formatSize(): String {
+    return when {
+        this >= GB -> {
+            String.format("%d GB", this / GB)
+        }
+        this >= MB -> {
+            String.format("%d MB", this  / MB)
+        }
+        else -> {
+            String.format("%d KB", this  / KB)
+        }
+    }
+}
+
 fun Long.formatSize(): String {
     return when {
         this >= GB -> {
@@ -39,6 +53,7 @@ fun Long.formatSize(): String {
         }
     }
 }
+
 
 fun Long.formatSpeed(): String = this.formatSize() + "/s"
 

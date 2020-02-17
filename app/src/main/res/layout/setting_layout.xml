@@ -1,29 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginLeft="10dp"
-    android:layout_marginRight="10dp">
+    android:layout_marginRight="10dp"
+    android:orientation="vertical">
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/darkThemeSwitch"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
         android:enabled="true"
-        android:text="@string/dark_theme"
-        android:textSize="16sp"
-        android:textColor="?android:textColorPrimary"
         android:fontFamily="@font/open_sans_regular"
-        />
+        android:text="@string/dark_theme"
+        android:textColor="?android:textColorPrimary"
+        android:textSize="16sp" />
 
     <com.revolgenx.lemillion.view.TitleTextView
         android:id="@+id/storageSettingTv"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
-        app:titleName="@string/storage_path"
         app:descriptionDrawable="@drawable/ic_edit"
-        app:showDrawable="true"/>
+        app:showDrawable="true"
+        app:titleName="@string/storage_path" />
+
+    <TextView
+        style="@style/SmallHeaderStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/torrent" />
+
+    <com.revolgenx.lemillion.view.TitleTextView
+        android:id="@+id/torrentDownloadSpeed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:titleName="@string/download_speed_kb"
+        />
+
+    <com.revolgenx.lemillion.view.TitleTextView
+        android:id="@+id/torrentUploadSpeed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:titleName="@string/upload_speed_kb" />
+
+
+    <TextView
+        style="@style/SmallHeaderStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:text="@string/file" />
+
+
+    <com.revolgenx.lemillion.view.TitleTextView
+        android:id="@+id/fileDownloadSpeed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:titleName="Download speed (Kb)" />
 
 </LinearLayout>

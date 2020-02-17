@@ -179,12 +179,15 @@ class Book() : Parcelable {
     fun remove(withFiles: Boolean = false) {
         when (bookProtocol) {
             BookProtocol.HTTP -> {
+                unregister()
                 Aria.download(this).load(id).cancel(withFiles)
             }
             BookProtocol.FTP -> {
+                unregister()
                 Aria.download(this).loadFtp(id).cancel(withFiles)
             }
             BookProtocol.UNKNOWN -> {
+                unregister()
             }
         }
     }
@@ -249,7 +252,8 @@ class Book() : Parcelable {
 
         hasError = true
         if (e != null) {
-            errorMsg = e.message ?: ""
+//            errorMsg = e.message ?: ""
+            errorMsg = "Error"
         }
 
         postEvent(BookEvent(listOf(this), BookEventType.BOOK_FAILED))

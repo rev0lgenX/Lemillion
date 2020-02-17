@@ -50,6 +50,8 @@ import com.revolgenx.lemillion.event.TorrentEngineEventTypes
 import com.revolgenx.lemillion.fragment.BaseRecyclerFragment
 import com.revolgenx.lemillion.fragment.book.BookFragment
 import com.revolgenx.lemillion.fragment.torrent.TorrentFragment
+import com.revolgenx.lemillion.model.BookPreferenceModel
+import com.revolgenx.lemillion.model.TorrentPreferenceModel
 import com.revolgenx.lemillion.view.makePagerAdapter
 import com.revolgenx.lemillion.view.makeToast
 import kotlinx.android.synthetic.main.activity_main.*
@@ -60,6 +62,10 @@ import org.koin.android.ext.android.inject
 class MainActivity : AppCompatActivity() {
 
     private var adapter: FragmentPagerAdapter? = null
+
+    val bookPreferenceModel by inject<BookPreferenceModel>()
+    val torrentPreferenceModel by inject<TorrentPreferenceModel>()
+    val torrentEngine by inject<TorrentEngine>()
 
     @ColorInt
     var iconColorInverse: Int = 0
