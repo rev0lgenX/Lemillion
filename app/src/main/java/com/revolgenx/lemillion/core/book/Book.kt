@@ -108,6 +108,7 @@ class Book() : Parcelable {
 
     fun resume() {
         if (!checkValidity()) return
+
         hasError = false
         errorMsg = ""
         if (state == IEntity.STATE_FAIL) {
@@ -128,7 +129,6 @@ class Book() : Parcelable {
     }
 
     fun stop() {
-
         if (!checkValidity()) return
 
         when (bookProtocol) {
