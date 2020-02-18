@@ -521,7 +521,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
                             listOf(this),
                             TorrentEventType.TORRENT_ERROR
                         )
-                    )
+                    )       //todo :/ really needed for notification
                     update()
                 }
             }
@@ -567,6 +567,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
 
     fun addListener(torrentProgressListener: TorrentProgressListener) {
         listeners.add(torrentProgressListener)
+        Timber.d("add listener ${listeners.size}")
     }
 
 
@@ -580,6 +581,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
 
     fun removeListener(torrentProgressListener: TorrentProgressListener) {
         listeners.remove(torrentProgressListener)
+        Timber.d("add listener ${listeners.size}")
     }
 
     fun removeAllListener() {
