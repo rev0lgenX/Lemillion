@@ -33,6 +33,8 @@ import com.revolgenx.lemillion.fragment.BaseRecyclerFragment
 import com.revolgenx.lemillion.viewmodel.TorrentViewModel
 import kotlinx.android.synthetic.main.base_recycler_view_layout.*
 import kotlinx.android.synthetic.main.torrent_recycler_adapter_layout.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.koin.android.ext.android.inject
@@ -123,8 +125,6 @@ class TorrentFragment :
             if (menu is MenuBuilder) {
                 menu.setOptionalIconsVisible(true)
             }
-
-            Timber.d("icon color $iconColor")
 
             menu?.iterator()?.forEach {
                 when (it.itemId) {
@@ -395,6 +395,7 @@ class TorrentFragment :
             private fun updateView() {
                 v.apply {
                     if(context == null) return
+
                     torrentNameTv.text = torrent!!.name
                     val progress = torrent!!.progress
                     torrentProgressBar.progress = progress
@@ -462,7 +463,9 @@ class TorrentFragment :
             }
 
             override fun invoke() {
-                updateView()
+                activity?.runOnUiThread {
+                    updateView()
+                }
             }
 
 

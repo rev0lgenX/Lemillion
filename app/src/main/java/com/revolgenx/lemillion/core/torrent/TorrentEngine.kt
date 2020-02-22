@@ -4,6 +4,7 @@ import com.revolgenx.lemillion.core.exception.TorrentException
 import com.revolgenx.lemillion.core.util.postEvent
 import com.revolgenx.lemillion.event.TorrentEngineEvent
 import com.revolgenx.lemillion.event.TorrentEngineEventTypes
+import com.revolgenx.lemillion.model.TorrentPreferenceModel
 import org.libtorrent4j.*
 import org.libtorrent4j.swig.*
 import timber.log.Timber
@@ -14,67 +15,10 @@ import java.util.concurrent.locks.ReentrantLock
 
 //TODO:CHECK ENGINE BEFORE ADDING MAGNET OR TORRENT
 
-class TorrentEngine : SessionManager() {
+class TorrentEngine(val torrentPreferenceModel: TorrentPreferenceModel) : SessionManager() {
 
     var isEngineRunning: AtomicBoolean = AtomicBoolean(false)
-    var settings = Settings()
     private val syncMagnet = ReentrantLock()
-
-
-    class Settings {
-        var cacheSize = DEFAULT_CACHE_SIZE
-        var activeDownloads = DEFAULT_ACTIVE_DOWNLOADS
-        var activeSeeds = DEFAULT_ACTIVE_SEEDS
-        var maxPeerListSize = DEFAULT_MAX_PEER_LIST_SIZE
-        var tickInterval = DEFAULT_TICK_INTERVAL
-        var inactivityTimeout = DEFAULT_INACTIVITY_TIMEOUT
-        var connectionsLimit = DEFAULT_CONNECTIONS_LIMIT
-        var connectionsLimitPerTorrent =
-            DEFAULT_CONNECTIONS_LIMIT_PER_TORRENT
-        var uploadsLimitPerTorrent = DEFAULT_UPLOADS_LIMIT_PER_TORRENT
-        var activeLimit = DEFAULT_ACTIVE_LIMIT
-        var port = DEFAULT_PORT
-        var downloadRateLimit = DEFAULT_DOWNLOAD_RATE_LIMIT
-        var uploadRateLimit = DEFAULT_UPLOAD_RATE_LIMIT
-        var dhtEnabled = DEFAULT_DHT_ENABLED
-        var lsdEnabled = DEFAULT_LSD_ENABLED
-        var utpEnabled = DEFAULT_UTP_ENABLED
-        var upnpEnabled = DEFAULT_UPNP_ENABLED
-        var natPmpEnabled = DEFAULT_NATPMP_ENABLED
-        var encryptInConnections = DEFAULT_ENCRYPT_IN_CONNECTIONS
-        var encryptOutConnections =
-            DEFAULT_ENCRYPT_OUT_CONNECTIONS
-        var encryptMode = DEFAULT_ENCRYPT_MODE
-        var autoManaged = DEFAULT_AUTO_MANAGED
-
-        companion object {
-            const val DEFAULT_CACHE_SIZE = 256
-            const val DEFAULT_ACTIVE_DOWNLOADS = 4
-            const val DEFAULT_ACTIVE_SEEDS = 4
-            const val DEFAULT_MAX_PEER_LIST_SIZE = 200
-            const val DEFAULT_TICK_INTERVAL = 1000
-            const val DEFAULT_INACTIVITY_TIMEOUT = 60
-            const val MIN_CONNECTIONS_LIMIT = 2
-            const val DEFAULT_CONNECTIONS_LIMIT = 200
-            const val DEFAULT_CONNECTIONS_LIMIT_PER_TORRENT = 40
-            const val DEFAULT_UPLOADS_LIMIT_PER_TORRENT = 4
-            const val DEFAULT_ACTIVE_LIMIT = 6
-            const val DEFAULT_PORT = 6881
-            const val MAX_PORT_NUMBER = 65535
-            const val MIN_PORT_NUMBER = 49160
-            const val DEFAULT_DOWNLOAD_RATE_LIMIT = 0
-            const val DEFAULT_UPLOAD_RATE_LIMIT = 0
-            const val DEFAULT_DHT_ENABLED = true
-            const val DEFAULT_LSD_ENABLED = true
-            const val DEFAULT_UTP_ENABLED = true
-            const val DEFAULT_UPNP_ENABLED = true
-            const val DEFAULT_NATPMP_ENABLED = true
-            const val DEFAULT_ENCRYPT_IN_CONNECTIONS = true
-            const val DEFAULT_ENCRYPT_OUT_CONNECTIONS = true
-            val DEFAULT_ENCRYPT_MODE = settings_pack.enc_policy.pe_enabled.swigValue()
-            const val DEFAULT_AUTO_MANAGED = false
-        }
-    }
 
     override fun onBeforeStart() {
         super.onBeforeStart()
@@ -286,34 +230,59 @@ class TorrentEngine : SessionManager() {
         val sendBufferWatermark = sp.sendBufferWatermark()
         sp.sendBufferWatermark(sendBufferWatermark / 2)
         sp.seedingOutgoingConnections(false)
-        settingsToSettingsPack(settings, sp)
+        settingsToSettingsPack(torrentPreferenceModel, sp)
         return sp
     }
 
 
-    private fun settingsToSettingsPack(settings: Settings, sp: SettingsPack) {
-        sp.cacheSize(settings.cacheSize)
-        sp.activeDownloads(settings.activeDownloads)
-        sp.activeSeeds(settings.activeSeeds)
-        sp.activeLimit(settings.activeLimit)
-        sp.maxPeerlistSize(settings.maxPeerListSize)
-        sp.tickInterval(settings.tickInterval)
-        sp.inactivityTimeout(settings.inactivityTimeout)
-        sp.connectionsLimit(settings.connectionsLimit)
+    private fun settingsToSettingsPack(torrentPref: TorrentPreferenceModel, sp: SettingsPack) {
+        sp.cacheSize(torrentPref.cacheSize)
+        sp.activeDownloads(torrentPref.activeDownloads)
+        sp.activeSeeds(torrentPref.activeSeeds)
+        sp.activeLimit(torrentPref.activeLimit)
+        sp.maxPeerlistSize(torrentPref.maxPeerListSize)
+        sp.tickInterval(torrentPref.tickInterval)
+        sp.inactivityTimeout(torrentPref.inactivityTimeout)
+        sp.connectionsLimit(torrentPref.connectionsLimit)
         sp.setString(
             settings_pack.string_types.listen_interfaces.swigValue(),
-            "0.0.0.0:" + settings.port
+            "0.0.0.0:" + torrentPref.port
         )
-        sp.enableDht(settings.dhtEnabled)
-        sp.broadcastLSD(settings.lsdEnabled)
-        sp.setBoolean(settings_pack.bool_types.enable_incoming_utp.swigValue(), settings.utpEnabled)
-        sp.setBoolean(settings_pack.bool_types.enable_outgoing_utp.swigValue(), settings.utpEnabled)
-        sp.setBoolean(settings_pack.bool_types.enable_upnp.swigValue(), settings.upnpEnabled)
-        sp.setBoolean(settings_pack.bool_types.enable_natpmp.swigValue(), settings.natPmpEnabled)
-        sp.setInteger(settings_pack.int_types.in_enc_policy.swigValue(), settings.encryptMode)
-        sp.setInteger(settings_pack.int_types.out_enc_policy.swigValue(), settings.encryptMode)
-        sp.uploadRateLimit(settings.uploadRateLimit)
-        sp.downloadRateLimit(settings.downloadRateLimit)
+        sp.enableDht(torrentPref.dhtEnabled)
+        sp.broadcastLSD(torrentPref.lsdEnabled)
+        sp.setBoolean(
+            settings_pack.bool_types.enable_incoming_utp.swigValue(),
+            torrentPref.utpEnabled
+        )
+        sp.setBoolean(
+            settings_pack.bool_types.enable_outgoing_utp.swigValue(),
+            torrentPref.utpEnabled
+        )
+        sp.setBoolean(settings_pack.bool_types.enable_upnp.swigValue(), torrentPref.upnpEnabled)
+        sp.setBoolean(settings_pack.bool_types.enable_natpmp.swigValue(), torrentPref.natPmpEnabled)
+        sp.setInteger(settings_pack.int_types.in_enc_policy.swigValue(), torrentPref.encryptMode)
+        sp.setInteger(settings_pack.int_types.out_enc_policy.swigValue(), torrentPref.encryptMode)
+        sp.uploadRateLimit(torrentPref.uploadRateLimit)
+        sp.downloadRateLimit(torrentPref.downloadRateLimit)
+    }
+
+
+    /**
+     * @param maxSpeed In kb*/
+    fun setMaxDownloadSpeed() {
+        applySettings()
+    }
+
+    fun setMaxUploadSpeed() {
+        applySettings()
+    }
+
+    private fun applySettings() {
+        if (!isEngineRunning() || !isRunning) return
+
+        val sp: SettingsPack = settings()
+        settingsToSettingsPack(torrentPreferenceModel, sp)
+        applySettings(sp)
     }
 
 

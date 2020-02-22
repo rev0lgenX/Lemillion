@@ -300,26 +300,21 @@ class AddBookBottomSheetDialog : BottomSheetDialogFragment() {
 
     @Download.onTaskRunning
     fun onTaskRunning(task: DownloadTask?) {
-        if (task != null) {
-            taskId = -1
-            showStatusProgress(visibility = false)
-            failCause = TaskFailedCause.NONE
-            name = task.downloadEntity.serverFileName ?: name
-            size = task.fileSize
+        if (task?.entity?.id != taskId) return
 
-            if ((task.fileSize >= getFree(File(path)))) {
-                failCause = TaskFailedCause.LOW_SPACE
-            }
-            checkFileExists(fullPath)
-            Aria.download(this).load(task.entity.id).stop()
-            Aria.download(this).load(task.entity.id).cancel(true)
-            updateView()
-        } else {
-            taskId = -1
-            showStatusProgress(visibility = false)
-            failCause = TaskFailedCause.UNKNOWN
-            updateView()
+        showStatusProgress(visibility = false)
+        failCause = TaskFailedCause.NONE
+        name = task.downloadEntity.serverFileName ?: name
+        size = task.fileSize
+
+        if ((task.fileSize >= getFree(File(path)))) {
+            failCause = TaskFailedCause.LOW_SPACE
         }
+        checkFileExists(fullPath)
+        Aria.download(this).load(task.entity.id).stop()
+        Aria.download(this).load(task.entity.id).cancel(true)
+        taskId = -1
+        updateView()
     }
 
     @Download.onTaskFail

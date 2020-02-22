@@ -22,7 +22,6 @@ import com.google.android.gms.ads.AdView
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.adapter.SelectableAdapter
 import com.revolgenx.lemillion.view.dip
-import kotlinx.android.synthetic.main.base_recycler_view_layout.*
 import kotlinx.android.synthetic.main.base_recycler_view_layout.view.*
 
 abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : BasePagerFragment() {
@@ -72,7 +71,6 @@ abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Bas
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         }
-
         val v = inflater.inflate(R.layout.base_recycler_view_layout, container, false)
         v.baseLayout.addView(adView)
         v.baseLayout.addView(progressText)

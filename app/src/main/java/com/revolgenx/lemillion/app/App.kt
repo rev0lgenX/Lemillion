@@ -8,7 +8,10 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.revolgenx.lemillion.BuildConfig
 import com.revolgenx.lemillion.core.coreModules
 import com.revolgenx.lemillion.debug.LemillionTree
+import com.revolgenx.lemillion.model.BookPreferenceModel
+import com.revolgenx.lemillion.model.modelModule
 import com.revolgenx.lemillion.viewmodel.viewModelModule
+import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
@@ -20,14 +23,6 @@ class App : MultiDexApplication() {
         super.onCreate()
 
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
-        Aria.init(this).apply {
-            appConfig.isNetCheck = true
-            appConfig.isNotNetRetry = false
-            downloadConfig.threadNum = 2
-//            downloadConfig.maxTaskNum = sharePreference().getInt(Key.MAX_TASK_NUM, 3)
-            downloadConfig.maxTaskNum = 2
-            downloadConfig.reTryNum = 5
-        }
 
         if (BuildConfig.DEBUG) {
             Timber.plant(LemillionTree(), Timber.DebugTree())
@@ -41,9 +36,20 @@ class App : MultiDexApplication() {
             loadKoinModules(
                 listOf(
                     coreModules,
-                    viewModelModule
+                    viewModelModule,
+                    modelModule
                 )
             )
+        }
+
+        val bookPref by inject<BookPreferenceModel>()
+
+        Aria.init(this).apply {
+            appConfig.isNetCheck = true
+            appConfig.isNotNetRetry = false
+            downloadConfig.threadNum = bookPref.numThread
+            downloadConfig.maxTaskNum = bookPref.numTask
+            downloadConfig.reTryNum = bookPref.numRetry
         }
 
         MobileAds.initialize(this)

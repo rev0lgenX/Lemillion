@@ -12,7 +12,7 @@ import org.koin.dsl.module
 val coreModules = module {
 
     //torrent engine
-    single { TorrentEngine() }
+    single { TorrentEngine(get()) }
     single { TorrentActiveState() }
 
     //service module
@@ -20,7 +20,7 @@ val coreModules = module {
 
     //database
     single {
-        Room.databaseBuilder(get(), LemillionDatabase::class.java, "weaverx_torrent.db")
+        Room.databaseBuilder(get(), LemillionDatabase::class.java, "lemillion_torrent.db")
             .fallbackToDestructiveMigration()
             .build()
     }

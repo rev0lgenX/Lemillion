@@ -168,11 +168,11 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
         get() {
             return if (checkValidity()) {
                 handle!!.uploadLimit
-            }else 0
+            } else 0
         }
         set(value) {
             field = value
-            if(checkValidity()){
+            if (checkValidity()) {
                 handle!!.uploadLimit = field
             }
         }
@@ -181,11 +181,11 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
         get() {
             return if (checkValidity()) {
                 handle!!.downloadLimit
-            }else 0
+            } else 0
         }
         set(value) {
             field = value
-            if(checkValidity()){
+            if (checkValidity()) {
                 handle!!.downloadLimit = field
             }
         }
@@ -269,7 +269,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
 
 //        if(!isPausedWithState()) return
 
-        if (engine.settings.autoManaged)
+        if (engine.torrentPreferenceModel.autoManaged)
             handle!!.setFlags(TorrentFlags.AUTO_MANAGED)
         else
             handle!!.unsetFlags(TorrentFlags.AUTO_MANAGED)
@@ -521,7 +521,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
                             listOf(this),
                             TorrentEventType.TORRENT_ERROR
                         )
-                    )
+                    )       //todo :/ really needed for notification
                     update()
                 }
             }
@@ -567,6 +567,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
 
     fun addListener(torrentProgressListener: TorrentProgressListener) {
         listeners.add(torrentProgressListener)
+        Timber.d("add listener ${listeners.size}")
     }
 
 
@@ -580,6 +581,7 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
 
     fun removeListener(torrentProgressListener: TorrentProgressListener) {
         listeners.remove(torrentProgressListener)
+        Timber.d("add listener ${listeners.size}")
     }
 
     fun removeAllListener() {

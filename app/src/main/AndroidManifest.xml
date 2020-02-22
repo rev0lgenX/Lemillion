@@ -1128,6 +1128,7 @@
 
         </activity>
         <activity android:name="com.revolgenx.lemillion.activity.TorrentMetaActivity" />
+        <activity android:name=".activity.AboutActivity" />
 
         <service android:name="com.revolgenx.lemillion.core.service.MainService" />
 

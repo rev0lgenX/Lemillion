@@ -357,7 +357,7 @@ class MainService : Service() {
             .setContentText(getString(R.string.foreground_notification))
             .setTicker(getString(R.string.foreground_notification))
             .setWhen(System.currentTimeMillis())
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_launcher_notif)
             .addAction(makeShutdownAction())
             .setCategory(Notification.CATEGORY_SERVICE)
 

@@ -5,6 +5,6 @@
     android:layout_height="match_parent"
     android:id="@+id/metaLayout">
 
-    <include layout="@layout/toolbar_layout" />
+    <include layout="@layout/toolbar_with_tab_layout" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
