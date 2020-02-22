@@ -19,18 +19,19 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.net.toUri
 import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.afollestad.materialdialogs.LayoutMode
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.customview.customView
 import com.arialyy.aria.util.CheckUtil
 import com.google.android.material.snackbar.Snackbar
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.listener.multi.SnackbarOnAnyDeniedMultiplePermissionsListener
 import com.leinardi.android.speeddial.SpeedDialActionItem
 import com.obsez.android.lib.filechooser.ChooserDialog
+import com.revolgenx.lemillion.BuildConfig
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.core.preference.getThemePref
 import com.revolgenx.lemillion.core.preference.setSorting
@@ -54,6 +55,7 @@ import com.revolgenx.lemillion.model.BookPreferenceModel
 import com.revolgenx.lemillion.model.TorrentPreferenceModel
 import com.revolgenx.lemillion.view.makePagerAdapter
 import com.revolgenx.lemillion.view.makeToast
+import com.revolgenx.lemillion.view.string
 import kotlinx.android.synthetic.main.activity_main.*
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -344,19 +346,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         menu?.findItem(R.id.search_menu)?.let { item ->
-            (item.actionView as SearchView).setOnQueryTextListener(object :
-                SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return false
-                }
+            (item.actionView as SearchView).also {
 
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    query = newText ?: ""
-                    val fragment = getCurrentTab()
-                    (fragment as BaseRecyclerFragment<*, *>).search(query)
-                    return true
-                }
-            })
+                it.setOnQueryTextListener(object :
+                    SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean {
+                        return false
+                    }
+
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        query = newText ?: ""
+                        val fragment = getCurrentTab()
+                        (fragment as BaseRecyclerFragment<*, *>).search(query)
+                        return true
+                    }
+                })
+            }
         }
 
         menu?.iterator()?.forEach {
@@ -424,6 +429,12 @@ class MainActivity : AppCompatActivity() {
                 makeSettingDialog()
                 true
             }
+
+            R.id.about_menu -> {
+                startActivity(Intent(this, AboutActivity::class.java))
+                true
+            }
+
             R.id.exit -> {
                 postEvent(ShutdownEvent())
                 true
@@ -433,6 +444,30 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+//    private fun openAboutDialog() {
+//        val customView = MaterialDialog(this).customView(R.layout.about_dialog_layout)
+//        customView.apply {
+//            appWithVerTv.text =
+//                string(R.string.lemillion_version).format(
+//                    BuildConfig.VERSION_NAME + BuildConfig.VERSION_CODE + "(" + string(
+//                        R.string.beta
+//                    ) + ")"
+//                )
+//
+//            privacyPolicyTv.setOnClickListener {
+//                val privacyUrl= "https://rev0lgenx.github.io/lemillion.github.io/"
+//                startActivity(Intent(Intent.ACTION_VIEW).apply {
+//                    data = Uri.parse(privacyUrl)
+//                })
+//            }
+//
+//            legalTv.setOnClickListener {
+//                openLegalDialog()
+//            }
+//        }
+//    }
+
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onShutdownEvent(event: ShutdownEvent) {

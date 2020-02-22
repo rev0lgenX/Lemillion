@@ -30,7 +30,7 @@ import com.revolgenx.lemillion.view.makePagerAdapter
 import com.revolgenx.lemillion.view.makeToast
 import kotlinx.android.synthetic.main.speed_layout_view.*
 import kotlinx.android.synthetic.main.speed_layout_view.view.*
-import kotlinx.android.synthetic.main.toolbar_layout.*
+import kotlinx.android.synthetic.main.toolbar_with_tab_layout.*
 import kotlinx.android.synthetic.main.torrent_meta_layout.*
 import kotlinx.coroutines.runBlocking
 import org.libtorrent4j.AnnounceEntry

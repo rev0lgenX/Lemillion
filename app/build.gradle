@@ -25,6 +25,10 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+
     dexOptions {
         javaMaxHeapSize "2g"
     }
@@ -49,11 +53,11 @@ android {
 
 
 ext {
-    lifecycle_version = '2.2.0-rc03'
-    room_version = '2.2.3'
+    lifecycle_version = '2.2.0'
+    room_version = '2.2.4'
     preference_version = '1.1.0'
     coroutine_version = '1.3.2'
-    event_bus_version = '3.1.1'
+    event_bus_version = '3.2.0'
     multidex_version = '2.0.1'
     libtorrent4j_version = '1.2.3.0'
 }
@@ -62,7 +66,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.1.0'
+    implementation 'androidx.core:core-ktx:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.material:material:1.2.0-alpha03'
@@ -128,10 +132,10 @@ dependencies {
     implementation 'org.libtorrent4j:libtorrent4j-android-x86_64:' + libtorrent4j_version
 
     //aria
-    implementation 'com.arialyy.aria:core:3.8.5'
-    implementation 'com.arialyy.aria:ftpComponent:3.8.5'
-    implementation 'com.arialyy.aria:sftpComponent:3.8.5'
-    kapt 'com.arialyy.aria:compiler:3.8.5'
+    implementation 'com.arialyy.aria:core:3.8.6'
+    implementation 'com.arialyy.aria:ftpComponent:3.8.6'
+    implementation 'com.arialyy.aria:sftpComponent:3.8.6'
+    kapt 'com.arialyy.aria:compiler:3.8.6'
 
     //permission
     implementation 'com.karumi:dexter:5.0.0'
@@ -144,6 +148,9 @@ dependencies {
 
     //filechooser
     implementation 'com.github.hedzr:android-file-chooser:devel-SNAPSHOT'
+
+    //about
+    implementation 'com.github.medyo:android-about-page:1.2.5'
 
 
     testImplementation 'junit:junit:4.12'

@@ -3,6 +3,8 @@ package com.revolgenx.lemillion.core.util
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
@@ -73,6 +75,10 @@ fun Context.copyToClipBoard(str: String) {
     clipboard.setPrimaryClip(clip)
     makeToast("Text Copied.")
 }
+
+
+fun createLinkIntent(url:String) = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+
 
 
 

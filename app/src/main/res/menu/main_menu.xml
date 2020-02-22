@@ -37,6 +37,13 @@
         android:icon="@drawable/ic_setting"/>
 
     <item
+        android:id="@+id/about_menu"
+        android:title="@string/about"
+        android:icon="@drawable/ic_info"
+        app:showAsAction="never"
+        />
+
+    <item
         android:id="@+id/exit"
         android:title="@string/exit"
         app:showAsAction="never"

@@ -3,6 +3,7 @@ package com.revolgenx.lemillion.core.preference
 import android.content.Context
 import androidx.preference.PreferenceManager
 import com.revolgenx.lemillion.core.preference.DEFAULT.DEFAULT_SORTING
+import com.revolgenx.lemillion.core.preference.KEY.KEY_CRASH
 import com.revolgenx.lemillion.core.preference.KEY.KEY_SORTING
 import com.revolgenx.lemillion.core.preference.KEY.KEY_THEME
 import com.revolgenx.lemillion.core.preference.KEY.STORAGE_KEY
@@ -34,6 +35,7 @@ object KEY {
     const val STORAGE_KEY = "key_storage"
     const val KEY_THEME = "key_theme"
     const val KEY_SORTING = "key_sorting"
+    const val KEY_CRASH = "key_crash"
 }
 
 fun Context.sharedPreference() = PreferenceManager.getDefaultSharedPreferences(this)
@@ -41,7 +43,7 @@ fun Context.sharedPreference() = PreferenceManager.getDefaultSharedPreferences(t
 fun storagePath(context: Context) =
     context.sharedPreference().getString(STORAGE_KEY, DEFAULT.DEFAULT_STORAGE)
 
-fun setStoragePath(context: Context, path:String) = context.putPrefString(STORAGE_KEY, path)
+fun setStoragePath(context: Context, path: String) = context.putPrefString(STORAGE_KEY, path)
 
 
 fun getSorting(context: Context) = context.getPrefInt(KEY_SORTING, DEFAULT_SORTING)
@@ -49,3 +51,7 @@ fun setSorting(context: Context, sorted: Int) = context.putInt(KEY_SORTING, sort
 
 fun getThemePref(context: Context) = context.getPrefInt(KEY_THEME, 0)
 fun setThemePref(theme: Int, context: Context) = context.putInt(KEY_THEME, theme)
+
+fun getCrashReportPref(context: Context) = context.getPrefBoolean(KEY_CRASH, true)
+fun setCrashReportPref(context: Context, report: Boolean = false) =
+    context.putBoolean(KEY_CRASH, report)

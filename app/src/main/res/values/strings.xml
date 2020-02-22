@@ -115,6 +115,25 @@
     <string name="upload_speed_kb">Upload speed (Kb)</string>
     <string name="invalid_number_format">Invalid number format</string>
     <string name="torrent_name">Torrent name</string>
+    <string name="about">About</string>
+    <string name="about_lemillion">Lemillion is downloader supporting both torrent and file downloader. It is inspired from Free Download Manager with the hope
+    of bringing features that FDM supports and much more.</string>
+    <string name="beta">Beta</string>
+    <string name="agreement">By using this app, you agree that rev0lgenX is not responsible for what you distribute using this app.</string>
+    <string name="general_information">General Information</string>
+    <string name="version">Version %s</string>
+    <string name="additional_info">Additional Information</string>
+    <string name="change_log">Change logs</string>
+    <string name="legal_information">Legal Information</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="legal">Legal</string>
+    <string name="libtorrent4j_license">Libtorrent4j</string>
+    <string name="aria_license">Aria</string>
+    <string name="license">License</string>
+    <string name="reports">Reports</string>
+    <string name="send_report">Send reports</string>
+    <string name="send_crash_report">Send crash reports and statistics. No personal data will be collected.</string>
+    <string name="help_translation">Help in translation</string>
 
 
     <string-array name="sort_array">
