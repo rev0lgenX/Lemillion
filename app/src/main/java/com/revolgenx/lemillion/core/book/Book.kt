@@ -14,6 +14,7 @@ import com.revolgenx.lemillion.core.util.getFree
 import com.revolgenx.lemillion.core.util.postEvent
 import com.revolgenx.lemillion.event.BookEvent
 import com.revolgenx.lemillion.event.BookEventType
+import timber.log.Timber
 import java.io.File
 import java.lang.Exception
 
@@ -249,6 +250,8 @@ class Book() : Parcelable {
     @Download.onTaskFail
     fun taskFail(task: DownloadTask?, e: Exception?) {
         if (!checkTaskValidity(task)) return
+
+        e?.let { Timber.e(e, "%s %s", task?.entity?.toString(), task?.key) }
 
         hasError = true
         if (e != null) {
