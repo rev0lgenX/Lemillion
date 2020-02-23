@@ -7,10 +7,10 @@
         android:title="@string/select_all"
         app:showAsAction="ifRoom"/>
 
-    <item
-        android:id="@+id/bookRestart"
-        app:showAsAction="ifRoom"
-        android:title="@string/restart"/>
+<!--    <item-->
+<!--        android:id="@+id/bookRestart"-->
+<!--        app:showAsAction="ifRoom"-->
+<!--        android:title="@string/restart"/>-->
     <item
         android:id="@+id/bookDelete"
         app:showAsAction="ifRoom"

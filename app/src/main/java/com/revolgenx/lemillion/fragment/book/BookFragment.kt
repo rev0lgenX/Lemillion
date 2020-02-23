@@ -89,16 +89,16 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                     true
                 }
 
-                R.id.bookRestart -> {
-                    postEvent(
-                        BookEvent(
-                            (adapter as BookRecyclerAdapter).getSelectedBooks(),
-                            BookEventType.BOOK_RESTART
-                        )
-                    )
-                    inActionMode = false
-                    true
-                }
+//                R.id.bookRestart -> {
+//                    postEvent(
+//                        BookEvent(
+//                            (adapter as BookRecyclerAdapter).getSelectedBooks(),
+//                            BookEventType.BOOK_RESTART
+//                        )
+//                    )
+//                    inActionMode = false
+//                    true
+//                }
                 android.R.id.home -> {
                     false
                 }
@@ -124,11 +124,11 @@ class BookFragment : BaseRecyclerFragment<BookFragment.BookRecyclerAdapter.BookV
                             .getDrawable(context!!, R.drawable.ic_select_all)
                             .apply { DrawableCompat.setTint(this, iconColor) }
                     }
-                    R.id.bookRestart -> {
-                        it.icon = AppCompatDrawableManager.get()
-                            .getDrawable(context!!, R.drawable.ic_restart)
-                            .apply { DrawableCompat.setTint(this, iconColor) }
-                    }
+//                    R.id.bookRestart -> {
+//                        it.icon = AppCompatDrawableManager.get()
+//                            .getDrawable(context!!, R.drawable.ic_restart)
+//                            .apply { DrawableCompat.setTint(this, iconColor) }
+//                    }
                 }
             }
             return true
