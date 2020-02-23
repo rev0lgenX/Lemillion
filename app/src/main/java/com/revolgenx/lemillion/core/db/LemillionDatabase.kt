@@ -12,7 +12,7 @@ import com.revolgenx.lemillion.core.db.converter.TorrentStatusConverter
 import com.revolgenx.lemillion.core.db.torrent.TorrentDao
 import com.revolgenx.lemillion.core.db.torrent.TorrentEntity
 
-@Database(entities = [TorrentEntity::class, BookEntity::class], version = 3)
+@Database(entities = [TorrentEntity::class, BookEntity::class], version = 1)
 @TypeConverters(
     DateConverter::class,
     TorrentStatusConverter::class,

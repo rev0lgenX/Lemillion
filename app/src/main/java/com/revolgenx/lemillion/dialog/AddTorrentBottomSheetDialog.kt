@@ -106,8 +106,6 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
         super.onActivityCreated(savedInstanceState)
         val uri = arguments?.getParcelable<Uri>(uriKey) ?: return
 
-
-
         addListener()
 
         path = if (savedInstanceState == null) {
@@ -159,7 +157,7 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
                 try {
                     handle = engine.loadTorrent(
                         TorrentInfo(uriContentToByteArray(context!!, uri)),
-                        null,
+                        File(path),
                         null,
                         null, null
                     )
