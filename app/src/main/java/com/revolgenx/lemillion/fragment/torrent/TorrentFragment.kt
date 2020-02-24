@@ -238,7 +238,7 @@ class TorrentFragment :
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onShutdownEvent(event:ShutdownEvent){
+    fun onShutdownEvent(event: ShutdownEvent) {
         forceShutdown = true
     }
 
@@ -394,7 +394,7 @@ class TorrentFragment :
             @SuppressLint("SetTextI18n")
             private fun updateView() {
                 v.apply {
-                    if(context == null) return
+                    if (context == null) return
 
                     torrentNameTv.text = torrent!!.name
                     val progress = torrent!!.progress
