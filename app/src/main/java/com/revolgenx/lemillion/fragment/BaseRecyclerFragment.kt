@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.revolgenx.lemillion.BuildConfig
 import com.revolgenx.lemillion.R
 import com.revolgenx.lemillion.adapter.SelectableAdapter
 import com.revolgenx.lemillion.view.dip
@@ -42,9 +43,9 @@ abstract class BaseRecyclerFragment<VH : RecyclerView.ViewHolder, T : Any> : Bas
         adView.adSize = AdSize.BANNER
 
         //todo test ads
-        adView.adUnitId = "ca-app-pub-3940256099942544/6300978111"
+        adView.adUnitId = if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/6300978111" else "ca-app-pub-2546597730102301/4394724519"
 
-        adRequest = AdRequest.Builder().build()
+            adRequest = AdRequest.Builder().build()
         adView.loadAd(adRequest)
         //original id ca-app-pub-2546597730102301/4394724519
         //test id ca-app-pub-3940256099942544/6300978111
