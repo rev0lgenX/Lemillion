@@ -268,7 +268,7 @@ class TorrentEngine(val torrentPreferenceModel: TorrentPreferenceModel) : Sessio
 
 
     /**
-     * @param maxSpeed In kb*/
+     * max speed in kb*/
     fun setMaxDownloadSpeed() {
         applySettings()
     }

@@ -1,6 +1,7 @@
 package com.revolgenx.lemillion.core.preference
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.revolgenx.lemillion.core.preference.DEFAULT.DEFAULT_SORTING
 import com.revolgenx.lemillion.core.preference.KEY.KEY_CRASH
@@ -38,7 +39,7 @@ object KEY {
     const val KEY_CRASH = "key_crash"
 }
 
-fun Context.sharedPreference() = PreferenceManager.getDefaultSharedPreferences(this)
+fun Context.sharedPreference(): SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
 fun storagePath(context: Context) =
     context.sharedPreference().getString(STORAGE_KEY, DEFAULT.DEFAULT_STORAGE)

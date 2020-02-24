@@ -217,22 +217,22 @@ class TorrentFragment :
                 progressText.showProgress(R.string.starting_engine, true)
             }
             TorrentEngineEventTypes.ENGINE_STARTED -> {
-                progressText?.showProgress(R.string.successful, false)
-                progressText?.visibility = View.GONE
+                progressText.showProgress(R.string.successful, false)
+                progressText.visibility = View.GONE
                 viewModel.getAllTorrents()
             }
             TorrentEngineEventTypes.ENGINE_STOPPING -> {
-                progressText?.visibility = View.VISIBLE
-                progressText?.showProgress(R.string.engine_stopping, false)
+                progressText.visibility = View.VISIBLE
+                progressText.showProgress(R.string.engine_stopping, false)
                 viewModel.removeAllTorrentEngineListener()
             }
             TorrentEngineEventTypes.ENGINE_FAULT -> {
-                progressText?.showProgress(R.string.unable_to_start_engine)
+                progressText.showProgress(R.string.unable_to_start_engine)
                 makeToast(getString(R.string.unable_to_start_engine))
             }
             TorrentEngineEventTypes.ENGINE_STOPPED -> {
-                progressText?.visibility = View.VISIBLE
-                progressText?.showProgress(R.string.engine_stopped, false)
+                progressText.visibility = View.VISIBLE
+                progressText.showProgress(R.string.engine_stopped, false)
             }
         }
     }

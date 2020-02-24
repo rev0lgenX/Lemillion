@@ -78,7 +78,6 @@ class MainActivity : AppCompatActivity() {
     private val uriKey = "uri_key"
     private var query = ""
     private var uri: Uri? = null
-    private val engine by inject<TorrentEngine>()
 
     private val pageChangeListener = object : ViewPager.OnPageChangeListener {
         override fun onPageScrollStateChanged(state: Int) {
@@ -100,6 +99,33 @@ class MainActivity : AppCompatActivity() {
             query = ""
         }
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (((intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0)) return
+
+        if (intent.data != null) {
+            uri = intent.data
+        } else if (intent.hasExtra("uri")) {
+            uri = intent.getParcelableExtra("uri")
+        }
+
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent == null) return
+        if (intent.data != null) {
+            uri = intent.data
+        } else if (intent.hasExtra("uri")) {
+            uri = intent.getParcelableExtra("uri")
+        }
+
+        if (torrentEngine.isEngineRunning()) {
+            initDecode()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -136,27 +162,18 @@ class MainActivity : AppCompatActivity() {
         viewPager.adapter = adapter
         viewPager.addOnPageChangeListener(pageChangeListener)
 
-
-        if (intent.data != null) {
-            uri = intent.data
-        } else if (intent.hasExtra("uri")) {
-            uri = intent.getParcelableExtra("uri")
-        }
-
         //TODO:SEARCH
         savedInstanceState?.let {
             it.getString(queryKey)?.let {
                 query = it
                 if (query.isNotEmpty()) {
-
+                    //todo search after rotation
                 }
             }
-
-//            uri = it.getParcelable(uriKey)
-//            initDecode()
         }
 
     }
+
 
     private fun initDecode() {
         if (uri == null) return
@@ -189,12 +206,7 @@ class MainActivity : AppCompatActivity() {
                 showErrorDialog(getString(R.string.unsupported_format))
             }
         }
-
-        intent.replaceExtras(Bundle())
-        intent.removeExtra("uri")
-        intent.action = ""
-        intent.data = null
-        intent.flags = 0
+        uri = null
     }
 
 

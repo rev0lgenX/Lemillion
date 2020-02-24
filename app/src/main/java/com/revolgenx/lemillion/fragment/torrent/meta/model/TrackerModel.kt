@@ -8,6 +8,6 @@ data class TrackerModel(var name:String, var working: TrackerStatus, var message
     }
 }
 
-enum class TrackerStatus(){
+enum class TrackerStatus{
     WORKING, NOT_WORKING, UPDATING, NOT_CONTACTED, UNKNOWN
 }
