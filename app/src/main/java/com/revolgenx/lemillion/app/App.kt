@@ -7,6 +7,7 @@ import com.google.android.gms.ads.MobileAds
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.revolgenx.lemillion.BuildConfig
 import com.revolgenx.lemillion.core.coreModules
+import com.revolgenx.lemillion.core.preference.getCrashReportPref
 import com.revolgenx.lemillion.debug.LemillionTree
 import com.revolgenx.lemillion.model.BookPreferenceModel
 import com.revolgenx.lemillion.model.modelModule
@@ -28,7 +29,8 @@ class App : MultiDexApplication() {
             Timber.plant(LemillionTree(), Timber.DebugTree())
         } else {
             Timber.plant(LemillionTree())
-            FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+            FirebaseCrashlytics.getInstance()
+                .setCrashlyticsCollectionEnabled(getCrashReportPref(this))
         }
 
 
