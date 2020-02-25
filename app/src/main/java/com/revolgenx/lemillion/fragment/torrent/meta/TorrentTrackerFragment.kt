@@ -11,8 +11,10 @@ import com.revolgenx.lemillion.core.torrent.TorrentProgressListener
 import com.revolgenx.lemillion.core.util.pmap
 import com.revolgenx.lemillion.fragment.torrent.meta.model.TrackerModel
 import com.revolgenx.lemillion.fragment.torrent.meta.model.TrackerStatus
+import com.revolgenx.lemillion.model.TorrentPreferenceModel
 import kotlinx.android.synthetic.main.tracker_adapter_layout.view.*
 import kotlinx.coroutines.*
+import org.koin.android.ext.android.inject
 import kotlin.coroutines.CoroutineContext
 
 class TorrentTrackerFragment :
@@ -23,7 +25,7 @@ class TorrentTrackerFragment :
     private val lsd = "LSD"
     private val dht = "DHT"
     private val pex = "PeX"
-
+    private val torrentPref by inject<TorrentPreferenceModel>()
     private val job = Job()
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
@@ -59,19 +61,19 @@ class TorrentTrackerFragment :
             torrent.handle!!.status().let {
                 trackerModels[lsd] = trackerModels[lsd]?.apply {
                     working =
-                        if (it.announcingToLsd()) TrackerStatus.WORKING else TrackerStatus.NOT_WORKING
+                        if (torrentPref.lsdEnabled) TrackerStatus.WORKING else TrackerStatus.NOT_WORKING
                 } ?: TrackerModel(
                     lsd,
-                    if (it.announcingToLsd()) TrackerStatus.WORKING else TrackerStatus.NOT_WORKING,
+                    if (torrentPref.lsdEnabled) TrackerStatus.WORKING else TrackerStatus.NOT_WORKING,
                     ""
                 )
 
                 trackerModels[dht] = trackerModels[dht]?.apply {
                     working =
-                        if (it.announcingToDht()) TrackerStatus.WORKING else TrackerStatus.NOT_WORKING
+                        if (torrentPref.dhtEnabled) TrackerStatus.WORKING else TrackerStatus.NOT_WORKING
                 } ?: TrackerModel(
                     dht,
-                    if (it.announcingToDht()) TrackerStatus.WORKING else TrackerStatus.NOT_WORKING,
+                    if (torrentPref.dhtEnabled) TrackerStatus.WORKING else TrackerStatus.NOT_WORKING,
                     ""
                 )
 
