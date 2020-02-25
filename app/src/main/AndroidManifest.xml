@@ -29,16 +29,10 @@
         tools:targetApi="q">
 
         <receiver android:name=".core.receiver.NotificationReceiver" />
-        <receiver android:name=".core.receiver.WifiReceiver">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
-            </intent-filter>
-        </receiver>
-
 
         <activity
             android:name="com.revolgenx.lemillion.activity.MainActivity"
-            android:launchMode="singleInstance">
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

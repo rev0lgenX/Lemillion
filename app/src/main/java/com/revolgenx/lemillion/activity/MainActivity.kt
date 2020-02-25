@@ -190,7 +190,7 @@ class MainActivity : AppCompatActivity() {
 
             HTTP_PREFIX, HTTPS_PREFIX -> {
                 if (CheckUtil.checkUrl(uri.toString())) {
-                    AddBookBottomSheetDialog.newInstance(uri.toString())
+                    AddBookBottomSheetDialog.newInstance(uri.toString().trim())
                         .show(supportFragmentManager, "add_book_fragment_tag")
 
                 } else {
@@ -295,7 +295,7 @@ class MainActivity : AppCompatActivity() {
         MaterialDialog(this, BottomSheet(LayoutMode.WRAP_CONTENT)).show {
             title(R.string.magnet_link)
             inputDialog(this@MainActivity) { _, text ->
-                AddTorrentBottomSheetDialog.newInstance(text.toString().toUri())
+                AddTorrentBottomSheetDialog.newInstance(text.toString().trim().toUri())
                     .show(supportFragmentManager, "add_torrent_bottom_sheet_dialog")
                 dismiss()
             }
