@@ -163,7 +163,7 @@ fun MainActivity.openLinkInputDialog(prefill: String? = null) {
         title(R.string.input_url)
         inputDialog(this.context, prefill) { _, text ->
             if (CheckUtil.checkUrl(text.toString())) {
-                AddBookBottomSheetDialog.newInstance(text.toString())
+                AddBookBottomSheetDialog.newInstance(text.toString().trim())
                     .show(supportFragmentManager, "add_book_fragment_tag")
                 dismiss()
             } else {
