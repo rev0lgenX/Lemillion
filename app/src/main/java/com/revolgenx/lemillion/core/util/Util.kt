@@ -67,6 +67,7 @@ suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineSco
     map { async { f(it) } }.awaitAll()
 }
 
+
 fun Context.copyToClipBoard(str: String) {
     val clipboard: ClipboardManager =
         ContextCompat.getSystemService<ClipboardManager>(this, ClipboardManager::class.java)!!

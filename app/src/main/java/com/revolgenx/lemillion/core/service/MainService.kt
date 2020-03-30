@@ -56,7 +56,6 @@ class MainService : Service() {
 
     private val torrentActiveState by inject<TorrentActiveState>()
 
-
     //for any error
     private val runnable = object : Runnable {
         override fun run() {
