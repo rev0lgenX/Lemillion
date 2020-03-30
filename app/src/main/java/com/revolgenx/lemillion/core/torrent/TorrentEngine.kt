@@ -87,7 +87,7 @@ class TorrentEngine(val torrentPreferenceModel: TorrentPreferenceModel) : Sessio
 
 
     @Throws(TorrentException::class)
-    fun fetchMagnet(uri: String): TorrentHandle {
+    fun fetchMagnet(uri: String, saveDir: File?): TorrentHandle {
         val ec = error_code()
         val p = add_torrent_params.parse_magnet_uri(uri, ec)
         require(ec.value() == 0) { ec.message() }
@@ -103,11 +103,16 @@ class TorrentEngine(val torrentPreferenceModel: TorrentPreferenceModel) : Sessio
                     throw TorrentException("Torrent exists!!!", TorrentHandle(th))
                 }
 
+                saveDir?.let {
+                    p.save_path = it.absolutePath
+                }
+
                 if (p.name.isEmpty()) p.name = strHash
                 var flags = p.flags
                 flags = flags.and_(TorrentFlags.AUTO_MANAGED.inv())
                 flags = flags.or_(TorrentFlags.UPLOAD_MODE)
                 flags = flags.or_(TorrentFlags.STOP_WHEN_READY)
+
                 p.flags = flags
                 ec.clear()
                 th = swig().add_torrent(p, ec)
@@ -139,13 +144,20 @@ class TorrentEngine(val torrentPreferenceModel: TorrentPreferenceModel) : Sessio
         require(ec.value() == 0) { ec.message() }
         val info_hash = p.info_hash
         var th = swig().find_torrent(info_hash)
+
+
+        var flags = p.flags
+        flags = flags.or_(TorrentFlags.UPLOAD_MODE)
+        flags = flags.or_(TorrentFlags.STOP_WHEN_READY)
+
         if (th != null && th.is_valid) { // found a download with the same hash
-            return TorrentHandle(th)
+            return TorrentHandle(th).also {
+                it.unsetFlags(flags)
+            }
         }
         if (saveDir != null) {
             p.save_path = saveDir.absolutePath
         }
-        var flags = p.flags
         flags = flags.and_(TorrentFlags.AUTO_MANAGED.inv())
         p.flags = flags
         th = swig().add_torrent(p, ec)
@@ -244,10 +256,17 @@ class TorrentEngine(val torrentPreferenceModel: TorrentPreferenceModel) : Sessio
         sp.tickInterval(torrentPref.tickInterval)
         sp.inactivityTimeout(torrentPref.inactivityTimeout)
         sp.connectionsLimit(torrentPref.connectionsLimit)
-        sp.setString(
-            settings_pack.string_types.listen_interfaces.swigValue(),
-            "0.0.0.0:" + torrentPref.port
-        )
+
+        sp.listenInterfaces("0.0.0.0:49160,[::]:49160");
+        sp.setInteger(
+            settings_pack.int_types.max_retry_port_bind.swigValue(),
+            65535 - 49160
+        );
+//        sp.setString(
+//            settings_pack.string_types.listen_interfaces.swigValue(),
+//            "0.0.0.0:65534"// + torrentPref.port
+//        )
+
         sp.enableDht(torrentPref.dhtEnabled)
         sp.broadcastLSD(torrentPref.lsdEnabled)
         sp.setBoolean(
