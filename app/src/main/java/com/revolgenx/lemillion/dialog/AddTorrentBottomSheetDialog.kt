@@ -70,6 +70,8 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
     private lateinit var headerLayout: View
     private val engine by inject<TorrentEngine>()
 
+    private var uri: Uri? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -104,7 +106,7 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        val uri = arguments?.getParcelable<Uri>(uriKey) ?: return
+        uri = arguments?.getParcelable(uriKey) ?: return
 
         addListener()
 
@@ -114,11 +116,17 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
             savedInstanceState.getString(torrentPathKey)!!
         }
 
-        when (uri.scheme) {
+        when (uri!!.scheme) {
             FILE_PREFIX -> {
                 try {
                     handle =
-                        engine.loadTorrent(TorrentInfo(uri.toFile()), File(path), null, null, null)
+                        engine.loadTorrent(
+                            TorrentInfo(uri!!.toFile()),
+                            File(path),
+                            null,
+                            null,
+                            null
+                        )
                 } catch (e: TorrentException) {
                     if (savedInstanceState == null) {
                         context!!.showErrorDialog(e.message ?: "error")
@@ -135,15 +143,15 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
             }
 
             MAGNET_PREFIX -> {
-                try {
-                    handle = engine.fetchMagnet(uri.toString())
+                handle = try {
+                    engine.fetchMagnet(uri.toString(), File(path))
                 } catch (e: TorrentException) {
                     if (savedInstanceState == null) {
                         context!!.showErrorDialog(e.message ?: "error")
                         dismiss()
                         return
                     } else {
-                        handle = e.data as? TorrentHandle
+                        e.data as? TorrentHandle
                     }
                 } catch (e: Exception) {
                     context!!.showErrorDialog(e.message ?: "error")
@@ -156,7 +164,7 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
             CONTENT_PREFIX -> {
                 try {
                     handle = engine.loadTorrent(
-                        TorrentInfo(uriContentToByteArray(context!!, uri)),
+                        TorrentInfo(uriContentToByteArray(context!!, uri!!)),
                         File(path),
                         null,
                         null, null
@@ -220,23 +228,41 @@ class AddTorrentBottomSheetDialog : BottomSheetDialogFragment(), AlertListener, 
                 return@setOnClickListener
             }
 
-            postEvent(
-                TorrentAddedEvent(
-                    Torrent().also {
-                        it.path = torrentPathMetaTv.description
-                        it.hash = torrentMetaHashTv.description
-                        it.handle = handle
-                        it.simpleState = true
-                        if (handle!!.status().hasMetadata()) {
-                            it.magnet = handle!!.makeMagnetUri()
-                            it.source = handle!!.torrentFile().bencode()!!
-                        } else {
-                            it.magnet = arguments?.getParcelable<Uri>(uriKey).toString()
-                        }
-                    },
-                    TorrentAddedEventTypes.TORRENT_ADDED
-                )
-            )
+            when (uri?.scheme) {
+                MAGNET_PREFIX -> {
+                    postEvent(
+                        TorrentAddedEvent(
+                            Torrent().also {
+                                it.path = torrentPathMetaTv.description
+                                it.hash = torrentMetaHashTv.description
+                                it.simpleState = true
+                                if (handle!!.status().hasMetadata()) {
+                                    it.source = handle!!.torrentFile().bencode()!!
+                                }
+                                it.magnet = arguments?.getParcelable<Uri>(uriKey).toString()
+                                it.handle = engine.loadTorrent(it.magnet, File(path))
+                            },
+                            TorrentAddedEventTypes.TORRENT_ADDED
+                        )
+                    )
+                }
+                else -> {
+                    postEvent(
+                        TorrentAddedEvent(
+                            Torrent().also {
+                                it.path = torrentPathMetaTv.description
+                                it.hash = torrentMetaHashTv.description
+                                it.handle = handle
+                                it.simpleState = true
+                                it.magnet = handle!!.makeMagnetUri()
+                                it.source = handle!!.torrentFile().bencode()!!
+                            },
+                            TorrentAddedEventTypes.TORRENT_ADDED
+                        )
+                    )
+                }
+            }
+
             dismiss()
         }
 
