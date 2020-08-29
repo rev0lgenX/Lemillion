@@ -624,6 +624,9 @@ class Torrent() : Parcelable, KoinComponent, AlertListener, CoroutineScope {
     override fun describeContents(): Int = 0
 
     companion object CREATOR : Parcelable.Creator<Torrent> {
+        const val SAVE_RESUME_SYNC_TIME = 10000L
+
+
         override fun createFromParcel(parcel: Parcel): Torrent {
             return Torrent(parcel)
         }
