@@ -91,7 +91,6 @@ class TorrentEngine(val torrentPreferenceModel: TorrentPreferenceModel) : Sessio
         val ec = error_code()
         val p = add_torrent_params.parse_magnet_uri(uri, ec)
         require(ec.value() == 0) { ec.message() }
-        p.set_disabled_storage()
         val hash = p.info_hash
         val strHash = hash.to_hex()
         var th: torrent_handle? = null
